@@ -1,0 +1,5 @@
+description: Pro per-key RGB control behavior
+
+compatible: "zmk,behavior-rgb-pro"
+
+include: two_param.yaml

@@ -1,0 +1,114 @@
+menuconfig RGB_PRO
+    bool "ZMK Pro RGB — per-key reactive RGB system"
+    select LED_STRIP
+    help
+      Per-key reactive RGB system for ZMK keyboards with WS2812 addressable
+      LEDs. Replaces the stock RGB underglow with 36 animated effects.
+      Requires a board-specific LED mapping header.
+
+if RGB_PRO
+
+# --- Animation ---
+
+config RGB_PRO_TICK_MS
+    int "Animation frame interval (ms)"
+    default 33
+    help
+      Time between animation frames. 33ms ≈ 30fps. Lower is smoother but
+      uses more CPU and battery.
+
+config RGB_PRO_NUM_KEYS
+    int "Total number of per-key LEDs"
+    default 0
+    help
+      Must match the number of keys/LEDs defined in your LED mapping header.
+      Set this in your zmk-config's .conf file.
+
+config RGB_PRO_MATRIX_ROWS
+    int "Number of rows in the key matrix"
+    default 1
+
+config RGB_PRO_MATRIX_COLS
+    int "Number of columns in the key matrix"
+    default 1
+
+# --- Startup defaults ---
+
+config RGB_PRO_START_ON
+    bool "Start with RGB enabled at boot"
+    default y
+
+config RGB_PRO_BRT_START
+    int "Startup brightness (0-100)"
+    default 40
+    range 0 100
+
+config RGB_PRO_BRT_STEP
+    int "Brightness adjustment step (0-100)"
+    default 10
+    range 1 100
+
+config RGB_PRO_HUE_STEP
+    int "Hue adjustment step (degrees)"
+    default 15
+    range 1 360
+
+config RGB_PRO_REACTIVE_DECAY
+    int "Reactive fade decay per frame (0-255)"
+    default 12
+    range 1 255
+    help
+      How fast a reactive key fades after being pressed.
+      Higher values = faster fade-out.
+
+# --- Idle ---
+
+config RGB_PRO_AUTO_OFF_IDLE
+    bool "Turn off LEDs when keyboard is idle"
+    default y
+
+# --- Caps-lock indicator ---
+
+config RGB_PRO_CAPS_INDICATOR
+    bool "Enable caps-lock LED indicator"
+    default n
+    help
+      Blinks a specific LED when caps lock is active. The LED index,
+      color, and blink interval are configurable below.
+
+if RGB_PRO_CAPS_INDICATOR
+
+config RGB_PRO_CAPS_LED
+    int "LED index for caps-lock indicator"
+    default 0
+    help
+      Physical LED index (in the WS2812 chain) of the caps-lock key.
+      Set this to match your board's wiring.
+
+config RGB_PRO_CAPS_R
+    int "Caps indicator red component (0-255)"
+    default 0
+
+config RGB_PRO_CAPS_G
+    int "Caps indicator green component (0-255)"
+    default 255
+
+config RGB_PRO_CAPS_B
+    int "Caps indicator blue component (0-255)"
+    default 0
+
+config RGB_PRO_CAPS_BLINK_MS
+    int "Caps indicator blink interval (ms)"
+    default 1000
+    help
+      Total blink cycle duration. The LED is on for half this time and
+      off for the other half.
+
+endif # RGB_PRO_CAPS_INDICATOR
+
+endif # RGB_PRO
+
+config ZMK_BEHAVIOR_RGB_PRO
+    bool
+    default y
+    depends on DT_HAS_ZMK_BEHAVIOR_RGB_PRO_ENABLED
