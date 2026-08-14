@@ -29,8 +29,8 @@ void rgbp_reactive_note_press(uint8_t led) {
 
 /* Manhattan-ish distance between two LEDs in grid units. */
 static int grid_dist(uint8_t a, uint8_t b) {
-    int dc = (int)key_col[a] - key_col[b];
-    int dr = ((int)key_row[a] - key_row[b]) * 2; /* rows taller */
+    int dc = (int)led_col[a] - led_col[b];
+    int dr = ((int)led_row[a] - led_row[b]) * 2; /* rows taller */
     if (dc < 0) dc = -dc;
     if (dr < 0) dr = -dr;
     return dc + dr;
@@ -87,8 +87,8 @@ static void e_spatial(int shape, bool multi, bool solid) {
 
         for (int i = 0; i < NKEYS; i++) {
             int show = 0;
-            int dc = (int)key_col[i] - key_col[src];
-            int dr = (int)key_row[i] - key_row[src];
+            int dc = (int)led_col[i] - led_col[src];
+            int dr = (int)led_row[i] - led_row[src];
             int adc = dc < 0 ? -dc : dc;
             int adr = dr < 0 ? -dr : dr;
 
@@ -141,9 +141,9 @@ static void e_typing_heatmap(void) {
 static void e_digital_rain(void) {
     for (int i = 0; i < NKEYS; i++) {
         /* per-column falling head based on phase and a column offset */
-        uint8_t col = key_col[i];
+        uint8_t col = led_col[i];
         uint8_t head = (state.phase / 2 + col * 7) % (RGB_PRO_ROWS * 2);
-        int d = (int)key_row[i] - head;
+        int d = (int)led_row[i] - head;
         uint8_t v;
         if (d == 0) {
             v = state.brt;                 /* bright head */

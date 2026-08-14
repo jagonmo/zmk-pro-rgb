@@ -3,15 +3,19 @@
 # Include paths:
 #   1. Module's own headers (effects.h, rgb_pro.h)
 #   2. ZMK app headers (zmk/*.h, drivers/behavior.h)
-#   3. User's zmk-config (for the board-specific LED map header)
+#   3. User's zmk-config shield directories (for rgb_pro_led_map.h)
+
 zephyr_include_directories(include)
 zephyr_include_directories(${WEST_TOPDIR}/zmk/app/include)
 zephyr_include_directories(${WEST_TOPDIR}/zmk/app/src)
 
 if(CONFIG_RGB_PRO)
-  # Add the user's shield directory to the include path so the module
-  # can find the board-specific LED mapping header.
-  zephyr_include_directories(${ZMK_CONFIG}/boards/shields/flatcat)
+  # Scan all shield directories under the user's config so the module
+  # finds rgb_pro_led_map.h regardless of the shield name.
+  file(GLOB shield_dirs "${ZMK_CONFIG}/boards/shields/*/")
+  foreach(dir ${shield_dirs})
+    zephyr_include_directories(${dir})
+  endforeach()
 
   zephyr_library()
   zephyr_library_sources(src/rgb_pro.c)

@@ -42,6 +42,22 @@ static const struct device *led_strip = DEVICE_DT_GET(STRIP_CHOSEN);
 struct led_rgb pixels[NKEYS];
 uint8_t reactive[NKEYS];
 
+/* LED-indexed geometry tables, built at init from the user's key-indexed
+ * tables (key_to_led, key_col, key_row). Effects always index these by
+ * physical LED number, not key position. */
+uint8_t led_col[NKEYS];
+uint8_t led_row[NKEYS];
+
+static void build_led_geometry(void) {
+    for (int pos = 0; pos < NKEYS; pos++) {
+        uint8_t led = key_to_led[pos];
+        if (led < NKEYS) {
+            led_col[led] = key_col[pos];
+            led_row[led] = key_row[pos];
+        }
+    }
+}
+
 struct rgb_pro_state state = {
     .on     = IS_ENABLED(CONFIG_RGB_PRO_START_ON),
     .effect = RGB_PRO_EFF_SOLID,
@@ -183,6 +199,7 @@ ZMK_SUBSCRIPTION(rgb_pro_activity, zmk_activity_state_changed);
 /* ---- Init ---- */
 static int rgb_pro_init(void) {
     if (!device_is_ready(led_strip)) { LOG_ERR("LED strip not ready"); return -ENODEV; }
+    build_led_geometry();
     if (state.on) start_anim();
     return 0;
 }

@@ -77,7 +77,7 @@ static void e_hue_pendulum(void) {
     uint8_t p = state.phase & 0xFF;
     int swing = (state.phase & 0x100) ? (255 - p) : p; /* triangle 0-255 */
     for (int i = 0; i < NKEYS; i++) {
-        uint16_t h = (state.hue + key_col[i] * 8 + swing) % 360;
+        uint16_t h = (state.hue + led_col[i] * 8 + swing) % 360;
         pixels[i] = rgbp_hsb(h, state.sat, state.brt);
     }
 }
@@ -85,7 +85,7 @@ static void e_hue_pendulum(void) {
 /* Hue wave: a sine-ish hue wave travelling across columns. */
 static void e_hue_wave(void) {
     for (int i = 0; i < NKEYS; i++) {
-        uint16_t h = (state.hue + (key_col[i] * 20) + state.phase * 3) % 360;
+        uint16_t h = (state.hue + (led_col[i] * 20) + state.phase * 3) % 360;
         pixels[i] = rgbp_hsb(h, state.sat, state.brt);
     }
 }
@@ -93,7 +93,7 @@ static void e_hue_wave(void) {
 /* Pixel fractal: mirrored moving bands from center columns outward. */
 static void e_pixel_fractal(void) {
     for (int i = 0; i < NKEYS; i++) {
-        int dc = key_col[i] * 2 - (RGB_PRO_COLS - 1);
+        int dc = led_col[i] * 2 - (RGB_PRO_COLS - 1);
         if (dc < 0) dc = -dc;
         uint8_t band = (dc * 16 + state.phase * 4) & 0xFF;
         uint8_t v = (uint32_t)state.brt * band / 255;

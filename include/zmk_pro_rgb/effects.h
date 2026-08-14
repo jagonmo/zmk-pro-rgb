@@ -73,11 +73,16 @@ extern struct rgb_pro_state state;
 extern struct led_rgb pixels[];
 extern uint8_t reactive[];
 
-/* LED mapping tables (defined by the user's board-specific header,
- * included from rgb_pro.c). */
+/* LED mapping tables:
+ *   key_to_led[], key_col[], key_row[] — defined by the user's rgb_pro_led_map.h,
+ *     indexed by key position (same order as the keymap).
+ *   led_col[], led_row[] — built at init by the module, indexed by physical LED
+ *     number in the chain. Effects use these, not the key_* tables. */
 extern const uint8_t key_to_led[];
 extern const uint8_t key_col[];
 extern const uint8_t key_row[];
+extern uint8_t led_col[];
+extern uint8_t led_row[];
 
 /* ---- Shared helpers (defined in rgb_pro.c) ---- */
 struct led_rgb rgbp_hsb(uint16_t h, uint8_t s, uint8_t b);

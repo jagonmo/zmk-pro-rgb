@@ -12,8 +12,8 @@
  * slight per-row skew so it undulates like a flag. */
 static void e_flag(void) {
     for (int i = 0; i < RGB_PRO_KEYS; i++) {
-        uint16_t col_hue = key_col[i] * 360 / RGB_PRO_COLS;
-        uint16_t row_skew = key_row[i] * 18;
+        uint16_t col_hue = led_col[i] * 360 / RGB_PRO_COLS;
+        uint16_t row_skew = led_row[i] * 18;
         uint16_t h = (state.hue + state.phase + col_hue + row_skew) % 360;
         pixels[i] = rgbp_hsb(h, state.sat, state.brt);
     }
