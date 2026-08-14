@@ -171,16 +171,74 @@ ZMK_LISTENER(rgb_pro_keys, rgb_pro_key_listener);
 ZMK_SUBSCRIPTION(rgb_pro_keys, zmk_position_state_changed);
 
 /* ---- Idle listener ---- */
-#if IS_ENABLED(CONFIG_RGB_PRO_AUTO_OFF_IDLE)
+#if IS_ENABLED(CONFIG_RGB_PRO_RANDOM_ON_WAKE)
+/* Effects that paint from state.hue as a single base colour. The rainbow
+ * family generates its own palette and ignores the base hue, so randomising
+ * the colour there would have no visible effect. */
+static bool effect_uses_base_hue(enum rgb_pro_effect e) {
+    switch (e) {
+    case RGB_PRO_EFF_SOLID:
+    case RGB_PRO_EFF_BREATHING:
+    case RGB_PRO_EFF_BAND_SAT:
+    case RGB_PRO_EFF_BAND_VAL:
+    case RGB_PRO_EFF_BAND_PINWHEEL_SAT:
+    case RGB_PRO_EFF_BAND_PINWHEEL_VAL:
+    case RGB_PRO_EFF_BAND_SPIRAL_SAT:
+    case RGB_PRO_EFF_BAND_SPIRAL_VAL:
+    case RGB_PRO_EFF_DUAL_BEACON:
+    case RGB_PRO_EFF_RAINDROPS:
+    case RGB_PRO_EFF_HUE_BREATHING:
+    case RGB_PRO_EFF_PIXEL_FRACTAL:
+    case RGB_PRO_EFF_SOLID_REACTIVE_SIMPLE:
+    case RGB_PRO_EFF_SOLID_REACTIVE:
+    case RGB_PRO_EFF_SOLID_REACTIVE_CROSS:
+    case RGB_PRO_EFF_SPLASH:
+    case RGB_PRO_EFF_LAYER_COLOR:
+    case RGB_PRO_EFF_COMPLEMENT:
+        return true;
+    default:
+        return false;
+    }
+}
+
+static void randomize_effect(void) {
+    /* Stir the PRNG with the current uptime so each wake differs. */
+    for (int i = (int)(k_uptime_get() & 0x0F); i >= 0; i--) {
+        rgbp_rand8();
+    }
+
+    state.effect = rgbp_rand8() % RGB_PRO_EFF_NUM;
+
+    if (effect_uses_base_hue(state.effect)) {
+        state.hue = (uint16_t)rgbp_rand8() * 360 / 256;
+    }
+    state.phase = 0;
+}
+#endif
+
 static int rgb_pro_activity_listener(const zmk_event_t *eh) {
     const struct zmk_activity_state_changed *ev = as_zmk_activity_state_changed(eh);
     if (!ev) return ZMK_EV_EVENT_BUBBLE;
-    (ev->state == ZMK_ACTIVITY_ACTIVE && state.on) ? start_anim() : stop_anim();
+
+    static bool was_active = true;
+    bool now_active = (ev->state == ZMK_ACTIVITY_ACTIVE);
+
+#if IS_ENABLED(CONFIG_RGB_PRO_RANDOM_ON_WAKE)
+    if (now_active && !was_active) {
+        randomize_effect();
+    }
+#endif
+    was_active = now_active;
+
+#if IS_ENABLED(CONFIG_RGB_PRO_AUTO_OFF_IDLE)
+    (now_active && state.on) ? start_anim() : stop_anim();
+#else
+    if (now_active && state.on) start_anim();
+#endif
     return ZMK_EV_EVENT_BUBBLE;
 }
 ZMK_LISTENER(rgb_pro_activity, rgb_pro_activity_listener);
 ZMK_SUBSCRIPTION(rgb_pro_activity, zmk_activity_state_changed);
-#endif
 
 /* ---- Init ---- */
 static int rgb_pro_init(void) {

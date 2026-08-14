@@ -67,6 +67,14 @@ config RGB_PRO_AUTO_OFF_IDLE
     bool "Turn off LEDs when keyboard is idle"
     default y
 
+config RGB_PRO_RANDOM_ON_WAKE
+    bool "Pick a random effect when waking from idle"
+    default n
+    help
+      Every time the keyboard wakes from idle, jump to a randomly chosen
+      effect. Effects that paint from a single base colour also get a
+      random hue; rainbow-style effects keep their own palette.
+
 # --- Overlays (drawn on top of the running effect) ---
 #
 # All key positions below are given in KEYMAP ORDER (position 0 is the first

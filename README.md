@@ -17,6 +17,7 @@ itself is hardware-agnostic.
 - **Per-key reactivity** — splash, cross, heatmap, digital rain
 - **Status overlays** — caps lock, BLE/USB output, active profile, battery
 - **Runtime controls** — hue, brightness, speed, effect cycling
+- **Random on wake** — a fresh effect and colour every time you come back
 - **Fully configurable** via Kconfig (no code changes needed)
 
 ## Quick Start
@@ -193,6 +194,16 @@ rgb_pro_pwr: rgb_pro_pwr {
 | 35 | Layer Color             | Extra    |
 | 36 | Complement              | Extra    |
 
+## Random on wake
+
+With `CONFIG_RGB_PRO_RANDOM_ON_WAKE=y`, the keyboard picks a new effect from
+the list every time it wakes from idle.
+
+Effects that paint from a single base colour (solid, breathing, the band and
+reactive families, ...) also get a random hue. Rainbow-style effects (the
+cycle family, flag, hue wave, ...) build their own palette, so only the
+effect changes for those.
+
 ## Overlays
 
 Overlays paint on top of whichever effect is running. All positions are given
@@ -250,6 +261,7 @@ Needs `CONFIG_ZMK_BATTERY_REPORTING=y` and a `zmk,battery` chosen node.
 | `CONFIG_RGB_PRO_REACTIVE_DECAY` | 12      | Reactive fade speed               |
 | `CONFIG_RGB_PRO_START_ON`       | y       | Start with RGB on                 |
 | `CONFIG_RGB_PRO_AUTO_OFF_IDLE`  | y       | Turn off when idle                |
+| `CONFIG_RGB_PRO_RANDOM_ON_WAKE` | n       | Random effect after each idle wake |
 | `CONFIG_RGB_PRO_CAPS_INDICATOR` | n       | Enable caps-lock overlay          |
 | `CONFIG_RGB_PRO_CAPS_KEY`       | 0       | Key position of the caps key      |
 | `CONFIG_RGB_PRO_CAPS_R/G/B`     | 0/255/0 | Caps indicator colour             |
