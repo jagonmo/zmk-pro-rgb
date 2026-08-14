@@ -97,5 +97,8 @@ void rgbp_render_animated(enum rgb_pro_effect eff);
 void rgbp_render_reactive(enum rgb_pro_effect eff);
 void rgbp_render_extra(enum rgb_pro_effect eff);
 
+/* Draw status overlays on top of the current effect (overlays.c). */
+void rgbp_render_overlays(void);
+
 /* Record a key press for spatial reactive effects. */
 void rgbp_reactive_note_press(uint8_t led);

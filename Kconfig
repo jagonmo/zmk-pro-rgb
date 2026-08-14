@@ -67,42 +67,102 @@ config RGB_PRO_AUTO_OFF_IDLE
     bool "Turn off LEDs when keyboard is idle"
     default y
 
-# --- Caps-lock indicator ---
+# --- Overlays (drawn on top of the running effect) ---
+#
+# All key positions below are given in KEYMAP ORDER (position 0 is the first
+# key in your keymap), not raw LED chain indices.
 
 config RGB_PRO_CAPS_INDICATOR
-    bool "Enable caps-lock LED indicator"
+    bool "Caps-lock indicator"
     default n
     help
-      Blinks a specific LED when caps lock is active. The LED index,
-      color, and blink interval are configurable below.
+      Blinks a key while caps lock is active. Requires
+      CONFIG_ZMK_HID_INDICATORS=y.
 
 if RGB_PRO_CAPS_INDICATOR
 
-config RGB_PRO_CAPS_LED
-    int "LED index for caps-lock indicator"
+config RGB_PRO_CAPS_KEY
+    int "Key position of the caps-lock key"
     default 0
-    help
-      Physical LED index (in the WS2812 chain) of the caps-lock key.
-      Set this to match your board's wiring.
 
 config RGB_PRO_CAPS_R
-    int "Caps indicator red component (0-255)"
+    int "Caps indicator red (0-255)"
     default 0
 
 config RGB_PRO_CAPS_G
-    int "Caps indicator green component (0-255)"
+    int "Caps indicator green (0-255)"
     default 255
 
 config RGB_PRO_CAPS_B
-    int "Caps indicator blue component (0-255)"
+    int "Caps indicator blue (0-255)"
     default 0
 
 config RGB_PRO_CAPS_BLINK_MS
-    int "Caps indicator blink interval (ms)"
+    int "Caps blink cycle (ms)"
     default 1000
+
+endif # RGB_PRO_CAPS_INDICATOR
+
+config RGB_PRO_STATUS_OVERLAY
+    bool "Output / Bluetooth profile status overlay"
+    default n
     help
-      Total blink cycle duration. The LED is on for half this time and
-      off for the other half.
+      While the chosen layer is active, shows the selected output
+      (blue = BLE, red = USB) and the state of the active BLE profile
+      (solid blue = connected, blinking blue = paired but disconnected,
+      blinking green = unpaired). Non-active profiles are shown dim,
+      because ZMK only exposes the active profile's state publicly.
+
+if RGB_PRO_STATUS_OVERLAY
+
+config RGB_PRO_STATUS_LAYER
+    int "Layer that shows the status overlay"
+    default 1
+
+config RGB_PRO_STATUS_OUT_KEY
+    int "Key position of the output toggle key"
+    default 0
+
+config RGB_PRO_STATUS_BT_KEY_BASE
+    int "Key position of the first BT profile key"
+    default 0
+    help
+      Profile keys are assumed to be laid out consecutively starting here,
+      so profile N is at RGB_PRO_STATUS_BT_KEY_BASE + N.
+
+config RGB_PRO_STATUS_BT_COUNT
+    int "Number of BT profile keys"
+    default 5
+
+config RGB_PRO_STATUS_BLINK_MS
+    int "Status blink cycle (ms)"
+    default 600
+
+endif # RGB_PRO_STATUS_OVERLAY
+
+config RGB_PRO_BATTERY_INDICATOR
+    bool "Battery level indicator"
+    default n
+    help
+      While the chosen layer is active, shows the battery level as a bar
+      that fills across a run of keys and sweeps from red (empty) to
+      green (full). Requires CONFIG_ZMK_BATTERY_REPORTING=y.
+
+if RGB_PRO_BATTERY_INDICATOR
+
+config RGB_PRO_BATTERY_LAYER
+    int "Layer that shows the battery indicator"
+    default 1
+
+config RGB_PRO_BATTERY_KEY_START
+    int "Key position of the first bar segment"
+    default 0
+
+config RGB_PRO_BATTERY_KEY_COUNT
+    int "Number of keys in the battery bar"
+    default 4
+
+endif # RGB_PRO_BATTERY_INDICATOR
 
 endif # RGB_PRO_CAPS_INDICATOR
 

@@ -19,7 +19,6 @@
 #include <zmk/keymap.h>
 
 #if IS_ENABLED(CONFIG_RGB_PRO_CAPS_INDICATOR)
-#include <zmk/hid_indicators.h>
 #endif
 
 #include <zmk_vfx_pro_rgb/rgb_pro.h>
@@ -96,19 +95,6 @@ static void decay_reactive(void) {
     }
 }
 
-/* ---- Caps-lock overlay ---- */
-#if IS_ENABLED(CONFIG_RGB_PRO_CAPS_INDICATOR)
-static void caps_overlay(void) {
-    zmk_hid_indicators_t ind = zmk_hid_indicators_get_current_profile();
-    if (!(ind & 0x02)) { return; }
-    bool on = (k_uptime_get() / (CONFIG_RGB_PRO_CAPS_BLINK_MS / 2)) & 1;
-    pixels[CONFIG_RGB_PRO_CAPS_LED] = on
-        ? (struct led_rgb){.r=CONFIG_RGB_PRO_CAPS_R,.g=CONFIG_RGB_PRO_CAPS_G,.b=CONFIG_RGB_PRO_CAPS_B}
-        : (struct led_rgb){0,0,0};
-}
-#else
-static void caps_overlay(void) {}
-#endif
 
 /* ---- Dispatch ---- */
 static void render_current(void) {
@@ -127,7 +113,7 @@ static void rgb_pro_tick(struct k_work *work) {
     if (!state.on) return;
     render_current();
     decay_reactive();
-    caps_overlay();
+    rgbp_render_overlays();
     led_strip_update_rgb(led_strip, pixels, STRIP_NUM);
     state.phase += state.speed;
     k_work_reschedule(&rgb_pro_work, K_MSEC(CONFIG_RGB_PRO_TICK_MS));

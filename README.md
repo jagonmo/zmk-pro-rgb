@@ -92,13 +92,19 @@ CONFIG_RGB_PRO_MATRIX_COLS=5
 CONFIG_RGB_PRO_START_ON=y
 CONFIG_RGB_PRO_BRT_START=40
 
-# Caps-lock indicator (optional)
+# Overlays (optional) — key positions are in KEYMAP ORDER
 CONFIG_RGB_PRO_CAPS_INDICATOR=y
-CONFIG_RGB_PRO_CAPS_LED=0
-CONFIG_RGB_PRO_CAPS_R=0
-CONFIG_RGB_PRO_CAPS_G=255
-CONFIG_RGB_PRO_CAPS_B=0
-CONFIG_RGB_PRO_CAPS_BLINK_MS=1000
+CONFIG_RGB_PRO_CAPS_KEY=42
+
+CONFIG_RGB_PRO_STATUS_OVERLAY=y
+CONFIG_RGB_PRO_STATUS_LAYER=1
+CONFIG_RGB_PRO_STATUS_OUT_KEY=14
+CONFIG_RGB_PRO_STATUS_BT_KEY_BASE=15
+
+CONFIG_RGB_PRO_BATTERY_INDICATOR=y
+CONFIG_RGB_PRO_BATTERY_LAYER=1
+CONFIG_RGB_PRO_BATTERY_KEY_START=0
+CONFIG_RGB_PRO_BATTERY_KEY_COUNT=4
 
 CONFIG_LED_STRIP=y
 CONFIG_ZMK_HID_INDICATORS=y
@@ -187,6 +193,36 @@ rgb_pro_pwr: rgb_pro_pwr {
 | 35 | Layer Color             | Extra    |
 | 36 | Complement              | Extra    |
 
+## Overlays
+
+Overlays paint on top of whichever effect is running. All positions are given
+as **key positions in keymap order**, not raw LED indices — the module maps
+them through your `key_to_led[]` table.
+
+### Caps lock
+Blinks one key while caps lock is on. Colour and blink rate are configurable.
+Needs `CONFIG_ZMK_HID_INDICATORS=y`.
+
+### Output / Bluetooth status
+Shown while a chosen layer is held:
+
+| Key | State | Colour |
+|-----|-------|--------|
+| Output toggle | BLE selected | Solid blue |
+| Output toggle | USB selected | Solid red |
+| Active profile | Connected | Solid blue |
+| Active profile | Paired, disconnected | Blinking blue |
+| Active profile | Not paired | Blinking green |
+| Other profiles | — | Dim white |
+
+> Non-active profiles show dim because ZMK keeps its profile table private to
+> `app/src/ble.c`; only the active profile's state is reachable from a module.
+
+### Battery
+Shown while a chosen layer is held. Fills a run of keys as a bar and sweeps
+the colour from red (empty) to green (full).
+Needs `CONFIG_ZMK_BATTERY_REPORTING=y`.
+
 ## Kconfig Reference
 
 | Option                          | Default | Description                       |
@@ -202,10 +238,20 @@ rgb_pro_pwr: rgb_pro_pwr {
 | `CONFIG_RGB_PRO_REACTIVE_DECAY` | 12      | Reactive fade speed               |
 | `CONFIG_RGB_PRO_START_ON`       | y       | Start with RGB on                 |
 | `CONFIG_RGB_PRO_AUTO_OFF_IDLE`  | y       | Turn off when idle                |
-| `CONFIG_RGB_PRO_CAPS_INDICATOR` | n       | Enable caps-lock LED              |
-| `CONFIG_RGB_PRO_CAPS_LED`       | 0       | LED index for caps key            |
-| `CONFIG_RGB_PRO_CAPS_R/G/B`     | 0/255/0 | Indicator color (RGB)             |
-| `CONFIG_RGB_PRO_CAPS_BLINK_MS`  | 1000    | Blink cycle duration (ms)         |
+| `CONFIG_RGB_PRO_CAPS_INDICATOR` | n       | Enable caps-lock overlay          |
+| `CONFIG_RGB_PRO_CAPS_KEY`       | 0       | Key position of the caps key      |
+| `CONFIG_RGB_PRO_CAPS_R/G/B`     | 0/255/0 | Caps indicator colour             |
+| `CONFIG_RGB_PRO_CAPS_BLINK_MS`  | 1000    | Caps blink cycle (ms)             |
+| `CONFIG_RGB_PRO_STATUS_OVERLAY` | n       | Enable output/BT status overlay   |
+| `CONFIG_RGB_PRO_STATUS_LAYER`   | 1       | Layer that shows the status       |
+| `CONFIG_RGB_PRO_STATUS_OUT_KEY` | 0       | Key position of the output toggle |
+| `CONFIG_RGB_PRO_STATUS_BT_KEY_BASE` | 0   | Key position of BT profile 0      |
+| `CONFIG_RGB_PRO_STATUS_BT_COUNT` | 5      | Number of BT profile keys         |
+| `CONFIG_RGB_PRO_STATUS_BLINK_MS` | 600    | Status blink cycle (ms)           |
+| `CONFIG_RGB_PRO_BATTERY_INDICATOR` | n    | Enable battery bar                |
+| `CONFIG_RGB_PRO_BATTERY_LAYER`  | 1       | Layer that shows the battery bar  |
+| `CONFIG_RGB_PRO_BATTERY_KEY_START` | 0    | First key of the bar              |
+| `CONFIG_RGB_PRO_BATTERY_KEY_COUNT` | 4    | Number of keys in the bar         |
 
 ## License
 
