@@ -15,7 +15,7 @@ itself is hardware-agnostic.
 
 - **36 effects** — base patterns, animated, per-key reactive, and custom
 - **Per-key reactivity** — splash, cross, heatmap, digital rain
-- **Caps-lock indicator** — configurable color and blink rate
+- **Status overlays** — caps lock, BLE/USB output, active profile, battery
 - **Runtime controls** — hue, brightness, speed, effect cycling
 - **Fully configurable** via Kconfig (no code changes needed)
 
@@ -199,6 +199,10 @@ Overlays paint on top of whichever effect is running. All positions are given
 as **key positions in keymap order**, not raw LED indices — the module maps
 them through your `key_to_led[]` table.
 
+Overlays always draw at full brightness and are **not** affected by the
+brightness controls (`RGBP_BRI` / `RGBP_BRD`), so status information stays
+readable even with the effects dimmed all the way down.
+
 ### Caps lock
 Blinks one key while caps lock is on. Colour and blink rate are configurable.
 Needs `CONFIG_ZMK_HID_INDICATORS=y`.
@@ -221,7 +225,15 @@ Shown while a chosen layer is held:
 ### Battery
 Shown while a chosen layer is held. Fills a run of keys as a bar and sweeps
 the colour from red (empty) to green (full).
-Needs `CONFIG_ZMK_BATTERY_REPORTING=y`.
+Needs `CONFIG_ZMK_BATTERY_REPORTING=y` and a `zmk,battery` chosen node.
+
+### Required options
+
+| Overlay  | Also needs                        |
+|----------|-----------------------------------|
+| Caps     | `CONFIG_ZMK_HID_INDICATORS=y`     |
+| Status   | `CONFIG_ZMK_BLE=y`                |
+| Battery  | `CONFIG_ZMK_BATTERY_REPORTING=y`  |
 
 ## Kconfig Reference
 
