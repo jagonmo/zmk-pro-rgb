@@ -110,7 +110,7 @@ static void battery_overlay(void) {
 
     /* Hue sweeps red (0deg) at 1% to green (120deg) at 100%. */
     uint16_t hue = (uint16_t)pct * 120 / 100;
-    struct led_rgb lit = rgbp_hsb(hue, 100, state.brt);
+    struct led_rgb lit = rgbp_hsb(hue, 100, 100);
 
     /* Bar fill: at least one segment lit while the battery reports > 0. */
     int filled = (pct * count + 99) / 100;
