@@ -11,7 +11,7 @@ zephyr_include_directories(${WEST_TOPDIR}/zmk/app/src)
 if(CONFIG_RGB_PRO)
   # Add the user's shield directory to the include path so the module
   # can find the board-specific LED mapping header.
-  zephyr_include_directories(${ZMK_CONFIG}/boards/shields)
+  zephyr_include_directories(${ZMK_CONFIG}/boards/shields/flatcat)
 
   zephyr_library()
   zephyr_library_sources(src/rgb_pro.c)
