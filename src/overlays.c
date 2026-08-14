@@ -72,7 +72,7 @@ static void status_overlay(void) {
     bool on = blink(CONFIG_RGB_PRO_STATUS_BLINK_MS);
 
     /* Output selector: blue = BLE, red = USB. */
-    struct zmk_endpoint_instance ep = zmk_endpoints_selected();
+    struct zmk_endpoint_instance ep = zmk_endpoint_get_selected();
     paint_key(CONFIG_RGB_PRO_STATUS_OUT_KEY,
               ep.transport == ZMK_TRANSPORT_USB ? RED : BLUE);
 
