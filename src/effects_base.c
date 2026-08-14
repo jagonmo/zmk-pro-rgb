@@ -6,7 +6,7 @@
  * integer-only to keep the nRF52840 light.
  */
 
-#include <zmk_pro_rgb/effects.h>
+#include <zmk_vfx_pro_rgb/effects.h>
 
 #define NKEYS RGB_PRO_KEYS
 

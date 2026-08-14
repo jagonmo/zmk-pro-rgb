@@ -6,7 +6,7 @@
  * lives in file-static buffers.
  */
 
-#include <zmk_pro_rgb/effects.h>
+#include <zmk_vfx_pro_rgb/effects.h>
 
 #define NKEYS RGB_PRO_KEYS
 

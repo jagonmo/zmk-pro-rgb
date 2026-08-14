@@ -8,7 +8,7 @@
  *      spatial effects (wide/cross/nexus/splash) that radiate from the key.
  */
 
-#include <zmk_pro_rgb/effects.h>
+#include <zmk_vfx_pro_rgb/effects.h>
 
 #define NKEYS RGB_PRO_KEYS
 

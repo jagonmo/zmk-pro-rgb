@@ -1,5 +1,7 @@
 # ZMK Pro RGB
 
+> Module name: `zmk-vfx-pro-rgb` &nbsp;•&nbsp; Repository: `zmk-pro-rgb`
+
 A ZMK module that replaces the stock RGB underglow with a full **per-key
 reactive RGB system**, featuring 36 animated effects ported from QMK's
 RGB Matrix.
@@ -42,7 +44,7 @@ manifest:
 
 ### 2. Create your LED mapping
 
-Create `config/boards/shields/<your-shield>/rgb_pro_led_map.h`:
+Create `config/rgb_pro_led_map.h` in your zmk-config:
 
 ```c
 #pragma once

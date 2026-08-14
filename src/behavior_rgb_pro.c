@@ -5,7 +5,7 @@
 #include <zephyr/logging/log.h>
 
 #include <zmk/behavior.h>
-#include <zmk_pro_rgb/rgb_pro.h>
+#include <zmk_vfx_pro_rgb/rgb_pro.h>
 
 LOG_MODULE_DECLARE(rgb_pro, CONFIG_ZMK_LOG_LEVEL);
 

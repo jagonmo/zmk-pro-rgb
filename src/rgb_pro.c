@@ -22,8 +22,8 @@
 #include <zmk/hid_indicators.h>
 #endif
 
-#include <zmk_pro_rgb/rgb_pro.h>
-#include <zmk_pro_rgb/effects.h>
+#include <zmk_vfx_pro_rgb/rgb_pro.h>
+#include <zmk_vfx_pro_rgb/effects.h>
 
 /* Board-specific LED mapping — provided by the user's zmk-config. */
 #include <rgb_pro_led_map.h>

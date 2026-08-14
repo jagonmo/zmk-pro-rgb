@@ -1,4 +1,4 @@
-name: zmk-pro-rgb
+name: zmk-vfx-pro-rgb
 build:
   cmake: .
   kconfig: Kconfig

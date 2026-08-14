@@ -4,7 +4,7 @@
  * state.effect is set to one of these explicitly.
  */
 
-#include <zmk_pro_rgb/effects.h>
+#include <zmk_vfx_pro_rgb/effects.h>
 
 #include <zmk/keymap.h>
 
