@@ -6,9 +6,15 @@
 
 #include <zmk_vfx_pro_rgb/effects.h>
 
-#if RGB_PRO_IS_CENTRAL
-#include <zmk/keymap.h>
-#endif
+/* Declared here rather than pulling <zmk/keymap.h>: on a split peripheral
+ * ZMK's keymap module isn't linked at all, so the symbol would be missing.
+ * The weak definition below lets this file link on every half — the real
+ * implementation overrides it wherever ZMK provides one. */
+uint8_t zmk_keymap_highest_layer_active(void);
+
+__attribute__((weak)) uint8_t zmk_keymap_highest_layer_active(void) {
+    return 0; /* peripherals have no layer state */
+}
 
 /* Flag: horizontal rainbow across columns, travelling left-to-right, with a
  * slight per-row skew so it undulates like a flag. */
@@ -24,12 +30,7 @@ static void e_flag(void) {
 /* Layer-color: base hue by highest active layer; pressed keys flash the
  * complementary color. */
 static void e_layer_color(void) {
-#if RGB_PRO_IS_CENTRAL
     uint8_t layer = zmk_keymap_highest_layer_active();
-#else
-    /* Peripherals do not track layer state; stay on the base hue. */
-    uint8_t layer = 0;
-#endif
     uint16_t h = (state.hue + layer * 40) % 360;
     struct led_rgb base = rgbp_hsb(h, state.sat, state.brt);
     for (int i = 0; i < RGB_PRO_KEYS; i++) {

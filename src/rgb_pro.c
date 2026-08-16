@@ -162,8 +162,14 @@ int rgb_pro_command(uint8_t cmd, uint8_t param) {
 /* ---- Key listener ---- */
 static int rgb_pro_key_listener(const zmk_event_t *eh) {
     const struct zmk_position_state_changed *ev = as_zmk_position_state_changed(eh);
-    if (!ev || !ev->state || ev->position >= NKEYS) return ZMK_EV_EVENT_BUBBLE;
-    uint8_t led = key_to_led[ev->position];
+    if (!ev || !ev->state) return ZMK_EV_EVENT_BUBBLE;
+
+    /* Positions arrive in whole-keyboard numbering; shift them into this
+     * half's local range before indexing the LED tables. */
+    int pos = (int)ev->position - CONFIG_RGB_PRO_POSITION_OFFSET;
+    if (pos < 0 || pos >= NKEYS) return ZMK_EV_EVENT_BUBBLE;
+
+    uint8_t led = key_to_led[pos];
     if (led < NKEYS) { reactive[led] = 255; rgbp_reactive_note_press(led); }
     return ZMK_EV_EVENT_BUBBLE;
 }

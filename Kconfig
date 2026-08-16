@@ -63,6 +63,15 @@ config RGB_PRO_REACTIVE_DECAY
 
 # --- Idle ---
 
+config RGB_PRO_POSITION_OFFSET
+    int "Subtract this from incoming key positions"
+    default 0
+    help
+      On a split peripheral, key positions arrive already mapped into the
+      full keyboard (e.g. 79-117), but this half's LED tables are indexed
+      from 0. Set this to the number of keys that come before this half so
+      reactive effects line up. Leave at 0 for a unibody or the central.
+
 config RGB_PRO_AUTO_OFF_IDLE
     bool "Turn off LEDs when keyboard is idle"
     default y
