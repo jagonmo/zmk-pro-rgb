@@ -6,7 +6,11 @@
 /* True on a unibody board and on the central half of a split. Peripherals
  * cannot reach host state (HID indicators, BLE profiles), so overlays that
  * depend on it are compiled out there. */
-#if !IS_ENABLED(CONFIG_ZMK_SPLIT) || IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
+/* Use defined() rather than IS_ENABLED(): Kconfig emits `#define CONFIG_X 1`
+ * for enabled symbols and nothing at all for disabled ones, so defined() is
+ * unambiguous in #if context. IS_ENABLED() expands to true/false, which the
+ * preprocessor can read as 0 in #if, silently making this always-central. */
+#if !defined(CONFIG_ZMK_SPLIT) || defined(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
 #define RGB_PRO_IS_CENTRAL 1
 #else
 #define RGB_PRO_IS_CENTRAL 0

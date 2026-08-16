@@ -11,11 +11,11 @@
 
 #include <zmk_vfx_pro_rgb/effects.h>
 
-#if IS_ENABLED(CONFIG_RGB_PRO_CAPS_INDICATOR) && RGB_PRO_IS_CENTRAL
+#if defined(CONFIG_RGB_PRO_CAPS_INDICATOR) && RGB_PRO_IS_CENTRAL
 #include <zmk/hid_indicators.h>
 #endif
 
-#if IS_ENABLED(CONFIG_RGB_PRO_STATUS_OVERLAY) && RGB_PRO_IS_CENTRAL
+#if defined(CONFIG_RGB_PRO_STATUS_OVERLAY) && RGB_PRO_IS_CENTRAL
 #include <zmk/endpoints.h>
 #include <zmk/ble.h>
 #endif
@@ -24,7 +24,7 @@
 #include <zmk/battery.h>
 #endif
 
-#if (IS_ENABLED(CONFIG_RGB_PRO_STATUS_OVERLAY) || IS_ENABLED(CONFIG_RGB_PRO_BATTERY_INDICATOR)) && RGB_PRO_IS_CENTRAL
+#if (defined(CONFIG_RGB_PRO_STATUS_OVERLAY) || defined(CONFIG_RGB_PRO_BATTERY_INDICATOR)) && RGB_PRO_IS_CENTRAL
 #include <zmk/keymap.h>
 #endif
 
@@ -48,7 +48,7 @@ static inline bool blink(uint16_t period_ms) {
 #define DIM_W ((struct led_rgb){12, 12, 12})
 
 /* ---- Caps lock (central only: HID indicators come from the host) ---- */
-#if IS_ENABLED(CONFIG_RGB_PRO_CAPS_INDICATOR) && RGB_PRO_IS_CENTRAL
+#if defined(CONFIG_RGB_PRO_CAPS_INDICATOR) && RGB_PRO_IS_CENTRAL
 static void caps_overlay(void) {
     zmk_hid_indicators_t ind = zmk_hid_indicators_get_current_profile();
     if (!(ind & 0x02)) return; /* bit 1 = caps lock (USB HID spec) */
@@ -65,7 +65,7 @@ static void caps_overlay(void) {}
 #endif
 
 /* ---- BLE / USB status (central only: peripherals have no host link) ---- */
-#if IS_ENABLED(CONFIG_RGB_PRO_STATUS_OVERLAY) && RGB_PRO_IS_CENTRAL
+#if defined(CONFIG_RGB_PRO_STATUS_OVERLAY) && RGB_PRO_IS_CENTRAL
 static void status_overlay(void) {
     if (zmk_keymap_highest_layer_active() != CONFIG_RGB_PRO_STATUS_LAYER) return;
 
@@ -101,7 +101,7 @@ static void status_overlay(void) {}
 #endif
 
 /* ---- Battery level (each half shows its own pack) ---- */
-#if IS_ENABLED(CONFIG_RGB_PRO_BATTERY_INDICATOR) && RGB_PRO_IS_CENTRAL
+#if defined(CONFIG_RGB_PRO_BATTERY_INDICATOR) && RGB_PRO_IS_CENTRAL
 static void battery_overlay(void) {
     if (zmk_keymap_highest_layer_active() != CONFIG_RGB_PRO_BATTERY_LAYER) return;
 
