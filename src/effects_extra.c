@@ -7,6 +7,22 @@
 #include <zmk_vfx_pro_rgb/effects.h>
 
 #if RGB_PRO_IS_CENTRAL
+#warning "RGB_PRO_IS_CENTRAL = 1"
+#else
+#warning "RGB_PRO_IS_CENTRAL = 0"
+#endif
+#ifdef CONFIG_ZMK_SPLIT
+#warning "CONFIG_ZMK_SPLIT is defined"
+#else
+#warning "CONFIG_ZMK_SPLIT NOT defined"
+#endif
+#ifdef CONFIG_ZMK_SPLIT_ROLE_CENTRAL
+#warning "CONFIG_ZMK_SPLIT_ROLE_CENTRAL is defined"
+#else
+#warning "CONFIG_ZMK_SPLIT_ROLE_CENTRAL NOT defined"
+#endif
+
+#if RGB_PRO_IS_CENTRAL
 #include <zmk/keymap.h>
 #endif
 
