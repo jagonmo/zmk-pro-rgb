@@ -116,12 +116,17 @@ CONFIG_ZMK_HID_INDICATORS=y
 
 ```dts
 behaviors {
-    rgb_pro: behavior_rgb_pro {
+    rgb_pro: rgbpro {
         compatible = "zmk,behavior-rgb-pro";
         #binding-cells = <2>;
     };
 };
 ```
+
+> The node **name** (`rgbpro`) must be 8 characters or fewer. ZMK identifies
+> behaviours by node name when forwarding them to split peripherals, and
+> anything longer silently fails to run there. The label (`rgb_pro`) has no
+> such limit.
 
 ### 5. Use in your keymap
 
