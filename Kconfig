@@ -70,10 +70,14 @@ config RGB_PRO_AUTO_OFF_IDLE
 config RGB_PRO_RANDOM_ON_WAKE
     bool "Pick a random effect when waking from idle"
     default n
+    depends on !ZMK_SPLIT
     help
       Every time the keyboard wakes from idle, jump to a randomly chosen
       effect. Effects that paint from a single base colour also get a
       random hue; rainbow-style effects keep their own palette.
+
+      Unavailable on split keyboards: each half tracks idle independently,
+      so they would wake at different moments and roll different effects.
 
 # --- Overlays (drawn on top of the running effect) ---
 #

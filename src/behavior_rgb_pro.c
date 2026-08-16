@@ -32,6 +32,10 @@ static const struct behavior_driver_api behavior_rgb_pro_driver_api = {
         on_keymap_binding_convert_central_state_dependent_params,
     .binding_pressed = on_keymap_binding_pressed,
     .binding_released = on_keymap_binding_released,
+    /* Lighting must apply to every half of a split, so the command runs on
+     * the central and every peripheral. Unibody boards treat all localities
+     * the same, so this is safe there too. */
+    .locality = BEHAVIOR_LOCALITY_GLOBAL,
 };
 
 static int behavior_rgb_pro_init(const struct device *dev) {

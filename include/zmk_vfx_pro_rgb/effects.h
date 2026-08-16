@@ -3,6 +3,15 @@
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/led_strip.h>
 
+/* True on a unibody board and on the central half of a split. Peripherals
+ * cannot reach host state (HID indicators, BLE profiles), so overlays that
+ * depend on it are compiled out there. */
+#if !IS_ENABLED(CONFIG_ZMK_SPLIT) || IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
+#define RGB_PRO_IS_CENTRAL 1
+#else
+#define RGB_PRO_IS_CENTRAL 0
+#endif
+
 /* Matrix geometry from Kconfig (set by the user's .conf). */
 #define RGB_PRO_COLS CONFIG_RGB_PRO_MATRIX_COLS
 #define RGB_PRO_ROWS CONFIG_RGB_PRO_MATRIX_ROWS
