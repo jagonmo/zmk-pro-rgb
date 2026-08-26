@@ -11,11 +11,11 @@
 
 #include <zmk_vfx_pro_rgb/effects.h>
 
-#if IS_ENABLED(CONFIG_RGB_PRO_CAPS_INDICATOR)
+#if defined(CONFIG_RGB_PRO_CAPS_INDICATOR) && RGB_PRO_IS_CENTRAL
 #include <zmk/hid_indicators.h>
 #endif
 
-#if IS_ENABLED(CONFIG_RGB_PRO_STATUS_OVERLAY)
+#if defined(CONFIG_RGB_PRO_STATUS_OVERLAY) && RGB_PRO_IS_CENTRAL
 #include <zmk/endpoints.h>
 #include <zmk/ble.h>
 #endif
@@ -24,7 +24,7 @@
 #include <zmk/battery.h>
 #endif
 
-#if IS_ENABLED(CONFIG_RGB_PRO_STATUS_OVERLAY) || IS_ENABLED(CONFIG_RGB_PRO_BATTERY_INDICATOR)
+#if (defined(CONFIG_RGB_PRO_STATUS_OVERLAY) || defined(CONFIG_RGB_PRO_BATTERY_INDICATOR)) && RGB_PRO_IS_CENTRAL
 #include <zmk/keymap.h>
 #endif
 
@@ -47,8 +47,8 @@ static inline bool blink(uint16_t period_ms) {
 #define BLUE  ((struct led_rgb){0, 0, 255})
 #define DIM_W ((struct led_rgb){12, 12, 12})
 
-/* ---- Caps lock ---- */
-#if IS_ENABLED(CONFIG_RGB_PRO_CAPS_INDICATOR)
+/* ---- Caps lock (central only: HID indicators come from the host) ---- */
+#if defined(CONFIG_RGB_PRO_CAPS_INDICATOR) && RGB_PRO_IS_CENTRAL
 static void caps_overlay(void) {
     zmk_hid_indicators_t ind = zmk_hid_indicators_get_current_profile();
     if (!(ind & 0x02)) return; /* bit 1 = caps lock (USB HID spec) */
@@ -64,8 +64,8 @@ static void caps_overlay(void) {
 static void caps_overlay(void) {}
 #endif
 
-/* ---- BLE / USB status ---- */
-#if IS_ENABLED(CONFIG_RGB_PRO_STATUS_OVERLAY)
+/* ---- BLE / USB status (central only: peripherals have no host link) ---- */
+#if defined(CONFIG_RGB_PRO_STATUS_OVERLAY) && RGB_PRO_IS_CENTRAL
 static void status_overlay(void) {
     if (zmk_keymap_highest_layer_active() != CONFIG_RGB_PRO_STATUS_LAYER) return;
 
@@ -100,16 +100,21 @@ static void status_overlay(void) {
 static void status_overlay(void) {}
 #endif
 
-/* ---- Battery level ---- */
-#if IS_ENABLED(CONFIG_RGB_PRO_BATTERY_INDICATOR)
+/* ---- Battery level (each half shows its own pack) ---- */
+#if defined(CONFIG_RGB_PRO_BATTERY_INDICATOR) && RGB_PRO_IS_CENTRAL
 static void battery_overlay(void) {
     if (zmk_keymap_highest_layer_active() != CONFIG_RGB_PRO_BATTERY_LAYER) return;
 
     uint8_t pct = zmk_battery_state_of_charge();
     const int count = CONFIG_RGB_PRO_BATTERY_KEY_COUNT;
 
-    /* Hue sweeps red (0deg) at 1% to green (120deg) at 100%. */
-    uint16_t hue = (uint16_t)pct * 120 / 100;
+    /* Hue sweeps red (0deg) to green (120deg). Anything at or below the
+     * floor stays pure red, so a low battery reads unmistakably as red
+     * instead of drifting into orange. */
+    const int floor_pct = CONFIG_RGB_PRO_BATTERY_RED_BELOW;
+    uint16_t hue = (pct <= floor_pct)
+        ? 0
+        : (uint16_t)(pct - floor_pct) * 120 / (100 - floor_pct);
     struct led_rgb lit = rgbp_hsb(hue, 100, 100);
 
     /* Bar fill: at least one segment lit while the battery reports > 0. */

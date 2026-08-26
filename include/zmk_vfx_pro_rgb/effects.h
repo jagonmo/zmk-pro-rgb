@@ -3,6 +3,19 @@
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/led_strip.h>
 
+/* True on a unibody board and on the central half of a split. Peripherals
+ * cannot reach host state (HID indicators, BLE profiles), so overlays that
+ * depend on it are compiled out there. */
+/* Use defined() rather than IS_ENABLED(): Kconfig emits `#define CONFIG_X 1`
+ * for enabled symbols and nothing at all for disabled ones, so defined() is
+ * unambiguous in #if context. IS_ENABLED() expands to true/false, which the
+ * preprocessor can read as 0 in #if, silently making this always-central. */
+#if !defined(CONFIG_ZMK_SPLIT) || defined(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
+#define RGB_PRO_IS_CENTRAL 1
+#else
+#define RGB_PRO_IS_CENTRAL 0
+#endif
+
 /* Matrix geometry from Kconfig (set by the user's .conf). */
 #define RGB_PRO_COLS CONFIG_RGB_PRO_MATRIX_COLS
 #define RGB_PRO_ROWS CONFIG_RGB_PRO_MATRIX_ROWS
@@ -66,6 +79,7 @@ struct rgb_pro_state {
     uint8_t sat;    /* 0-100 */
     uint8_t brt;    /* 0-100 */
     uint8_t speed;  /* 1-10 */
+    int8_t  dir;    /* +1 forward, -1 reversed */
     uint16_t phase; /* animation counter */
 };
 

@@ -12,6 +12,7 @@
 #include <zephyr/drivers/led_strip.h>
 #include <zephyr/drivers/regulator.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/random/random.h>
 
 #include <zmk/event_manager.h>
 #include <zmk/events/position_state_changed.h>
@@ -64,6 +65,7 @@ struct rgb_pro_state state = {
     .sat    = 100,
     .brt    = CONFIG_RGB_PRO_BRT_START,
     .speed  = 4,
+    .dir    = 1,
 };
 
 /* ---- HSB to RGB (integer math) ---- */
@@ -115,7 +117,7 @@ static void rgb_pro_tick(struct k_work *work) {
     decay_reactive();
     rgbp_render_overlays();
     led_strip_update_rgb(led_strip, pixels, STRIP_NUM);
-    state.phase += state.speed;
+    state.phase += (int16_t)(state.speed * state.dir);
     k_work_reschedule(&rgb_pro_work, K_MSEC(CONFIG_RGB_PRO_TICK_MS));
 }
 
@@ -139,6 +141,9 @@ static void start_anim(void) { ext_power_set(true); k_work_reschedule(&rgb_pro_w
 static void stop_anim(void) { k_work_cancel_delayable(&rgb_pro_work); clear_strip(); ext_power_set(false); }
 
 /* ---- Behavior command ---- */
+/* Defined further down, next to the wake handling. */
+static void randomize_effect(void);
+
 int rgb_pro_command(uint8_t cmd, uint8_t param) {
     ARG_UNUSED(param);
     switch (cmd) {
@@ -153,6 +158,10 @@ int rgb_pro_command(uint8_t cmd, uint8_t param) {
     case RGB_PRO_CMD_BRT_DN:   state.brt = state.brt > CONFIG_RGB_PRO_BRT_STEP ? state.brt - CONFIG_RGB_PRO_BRT_STEP : 0; break;
     case RGB_PRO_CMD_SPD_UP:   if (state.speed < 10) state.speed++; break;
     case RGB_PRO_CMD_SPD_DN:   if (state.speed > 1)  state.speed--; break;
+    case RGB_PRO_CMD_RANDOM:   randomize_effect(); break;
+    case RGB_PRO_CMD_DIR_TOG:  state.dir = -state.dir; break;
+    case RGB_PRO_CMD_DIR_FWD:  state.dir = 1; break;
+    case RGB_PRO_CMD_DIR_REV:  state.dir = -1; break;
     default: return -ENOTSUP;
     }
     state.on ? start_anim() : stop_anim();
@@ -162,8 +171,14 @@ int rgb_pro_command(uint8_t cmd, uint8_t param) {
 /* ---- Key listener ---- */
 static int rgb_pro_key_listener(const zmk_event_t *eh) {
     const struct zmk_position_state_changed *ev = as_zmk_position_state_changed(eh);
-    if (!ev || !ev->state || ev->position >= NKEYS) return ZMK_EV_EVENT_BUBBLE;
-    uint8_t led = key_to_led[ev->position];
+    if (!ev || !ev->state) return ZMK_EV_EVENT_BUBBLE;
+
+    /* Positions arrive in whole-keyboard numbering; shift them into this
+     * half's local range before indexing the LED tables. */
+    int pos = (int)ev->position - CONFIG_RGB_PRO_POSITION_OFFSET;
+    if (pos < 0 || pos >= NKEYS) return ZMK_EV_EVENT_BUBBLE;
+
+    uint8_t led = key_to_led[pos];
     if (led < NKEYS) { reactive[led] = 255; rgbp_reactive_note_press(led); }
     return ZMK_EV_EVENT_BUBBLE;
 }
@@ -171,7 +186,6 @@ ZMK_LISTENER(rgb_pro_keys, rgb_pro_key_listener);
 ZMK_SUBSCRIPTION(rgb_pro_keys, zmk_position_state_changed);
 
 /* ---- Idle listener ---- */
-#if IS_ENABLED(CONFIG_RGB_PRO_RANDOM_ON_WAKE)
 /* Effects that paint from state.hue as a single base colour. The rainbow
  * family generates its own palette and ignores the base hue, so randomising
  * the colour there would have no visible effect. */
@@ -202,19 +216,16 @@ static bool effect_uses_base_hue(enum rgb_pro_effect e) {
 }
 
 static void randomize_effect(void) {
-    /* Stir the PRNG with the current uptime so each wake differs. */
-    for (int i = (int)(k_uptime_get() & 0x0F); i >= 0; i--) {
-        rgbp_rand8();
-    }
+    /* Zephyr's RNG is entropy-backed, so this varies at boot too. A PRNG
+     * seeded from a constant would pick the same effect every power-on. */
+    uint32_t r = sys_rand32_get();
 
-    state.effect = rgbp_rand8() % RGB_PRO_EFF_NUM;
-
+    state.effect = r % RGB_PRO_EFF_NUM;
     if (effect_uses_base_hue(state.effect)) {
-        state.hue = (uint16_t)rgbp_rand8() * 360 / 256;
+        state.hue = (r >> 8) % 360;
     }
     state.phase = 0;
 }
-#endif
 
 static int rgb_pro_activity_listener(const zmk_event_t *eh) {
     const struct zmk_activity_state_changed *ev = as_zmk_activity_state_changed(eh);
@@ -244,6 +255,11 @@ ZMK_SUBSCRIPTION(rgb_pro_activity, zmk_activity_state_changed);
 static int rgb_pro_init(void) {
     if (!device_is_ready(led_strip)) { LOG_ERR("LED strip not ready"); return -ENODEV; }
     build_led_geometry();
+#if IS_ENABLED(CONFIG_RGB_PRO_RANDOM_ON_WAKE)
+    /* Also covers waking from deep sleep: ZMK's sleep resets the SoC, so
+     * the firmware comes back through init. */
+    randomize_effect();
+#endif
     if (state.on) start_anim();
     return 0;
 }

@@ -6,7 +6,15 @@
 
 #include <zmk_vfx_pro_rgb/effects.h>
 
-#include <zmk/keymap.h>
+/* Declared here rather than pulling <zmk/keymap.h>: on a split peripheral
+ * ZMK's keymap module isn't linked at all, so the symbol would be missing.
+ * The weak definition below lets this file link on every half — the real
+ * implementation overrides it wherever ZMK provides one. */
+uint8_t zmk_keymap_highest_layer_active(void);
+
+__attribute__((weak)) uint8_t zmk_keymap_highest_layer_active(void) {
+    return 0; /* peripherals have no layer state */
+}
 
 /* Flag: horizontal rainbow across columns, travelling left-to-right, with a
  * slight per-row skew so it undulates like a flag. */

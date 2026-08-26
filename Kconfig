@@ -63,17 +63,33 @@ config RGB_PRO_REACTIVE_DECAY
 
 # --- Idle ---
 
+config RGB_PRO_POSITION_OFFSET
+    int "Subtract this from incoming key positions"
+    default 0
+    help
+      On a split peripheral, key positions arrive already mapped into the
+      full keyboard (e.g. 79-117), but this half's LED tables are indexed
+      from 0. Set this to the number of keys that come before this half so
+      reactive effects line up. Leave at 0 for a unibody or the central.
+
 config RGB_PRO_AUTO_OFF_IDLE
     bool "Turn off LEDs when keyboard is idle"
     default y
 
 config RGB_PRO_RANDOM_ON_WAKE
-    bool "Pick a random effect when waking from idle"
+    bool "Pick a random effect on boot and when waking"
     default n
+    depends on !ZMK_SPLIT
     help
-      Every time the keyboard wakes from idle, jump to a randomly chosen
-      effect. Effects that paint from a single base colour also get a
-      random hue; rainbow-style effects keep their own palette.
+      Jump to a randomly chosen effect at power-on and every time the
+      keyboard wakes from idle. Deep sleep resets the SoC, so waking from
+      sleep is covered by the power-on path.
+
+      Effects that paint from a single base colour also get a random hue;
+      rainbow-style effects keep their own palette.
+
+      Unavailable on split keyboards: each half tracks idle independently,
+      so they would wake at different moments and roll different effects.
 
 # --- Overlays (drawn on top of the running effect) ---
 #
@@ -169,6 +185,15 @@ config RGB_PRO_BATTERY_KEY_START
 config RGB_PRO_BATTERY_KEY_COUNT
     int "Number of keys in the battery bar"
     default 4
+
+config RGB_PRO_BATTERY_RED_BELOW
+    int "Battery level that shows pure red (%)"
+    default 15
+    range 0 99
+    help
+      At or below this level the bar is pure red; above it the colour
+      sweeps from red up to green at 100%. Raising this reserves more of
+      the range for red so a low battery is unmistakable.
 
 endif # RGB_PRO_BATTERY_INDICATOR
 

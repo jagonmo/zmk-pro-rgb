@@ -18,6 +18,7 @@ itself is hardware-agnostic.
 - **Status overlays** — caps lock, BLE/USB output, active profile, battery
 - **Runtime controls** — hue, brightness, speed, effect cycling
 - **Random on wake** — a fresh effect and colour every time you come back
+- **Split support** — both halves stay in sync through ZMK's global behaviour locality
 - **Fully configurable** via Kconfig (no code changes needed)
 
 ## Quick Start
@@ -115,12 +116,17 @@ CONFIG_ZMK_HID_INDICATORS=y
 
 ```dts
 behaviors {
-    rgb_pro: behavior_rgb_pro {
+    rgb_pro: rgbpro {
         compatible = "zmk,behavior-rgb-pro";
         #binding-cells = <2>;
     };
 };
 ```
+
+> The node **name** (`rgbpro`) must be 8 characters or fewer. ZMK identifies
+> behaviours by node name when forwarding them to split peripherals, and
+> anything longer silently fails to run there. The label (`rgb_pro`) has no
+> such limit.
 
 ### 5. Use in your keymap
 
@@ -203,6 +209,68 @@ Effects that paint from a single base colour (solid, breathing, the band and
 reactive families, ...) also get a random hue. Rainbow-style effects (the
 cycle family, flag, hue wave, ...) build their own palette, so only the
 effect changes for those.
+
+## Split keyboards
+
+Both halves run their own copy of the module and drive their own strip. The
+`&rgb_pro` behaviour is declared with `BEHAVIOR_LOCALITY_GLOBAL`, so ZMK
+forwards every command to the central *and* every peripheral — toggling,
+cycling effects, hue, brightness and speed all apply to the whole keyboard,
+exactly like the stock `&rgb_ug`.
+
+### Per-side LED map
+
+Key positions on a peripheral are **local** to that half (they start at 0),
+so each side needs its own tables. Put both in one
+`config/rgb_pro_led_map.h` and switch on the split role:
+
+```c
+#if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
+    /* left half: its own key count, its own chain */
+    const uint8_t key_to_led[] = LED_LAYOUT_LEFT( ... );
+    const uint8_t key_col[]    = LED_LAYOUT_LEFT( ... );
+    const uint8_t key_row[]    = LED_LAYOUT_LEFT( ... );
+#else
+    /* right half */
+    const uint8_t key_to_led[] = LED_LAYOUT_RIGHT( ... );
+    const uint8_t key_col[]    = LED_LAYOUT_RIGHT( ... );
+    const uint8_t key_row[]    = LED_LAYOUT_RIGHT( ... );
+#endif
+```
+
+Set `CONFIG_RGB_PRO_NUM_KEYS` per side in `<shield>_left.conf` /
+`<shield>_right.conf` to that half's key count.
+
+Keep `key_col` **continuous across the whole keyboard** — if the left half
+ends at column 5, the right half should start at column 6. Effects read these
+columns, so continuing the numbering is what makes a left-to-right sweep run
+across both halves instead of restarting in the middle.
+
+`CONFIG_RGB_PRO_MATRIX_COLS` / `_ROWS` describe the **full** keyboard and are
+the same on both sides.
+
+### What runs where
+
+| Feature | Central | Peripheral |
+|---------|---------|------------|
+| Effects and animation | ✅ | ✅ |
+| Commands (toggle, effect, hue, brightness, speed) | ✅ | ✅ synced |
+| Reactive effects | own keys | own keys |
+| Caps lock overlay | ✅ | — |
+| BLE/USB status overlay | ✅ | — |
+| Battery overlay | ✅ | — |
+| Layer Color effect | ✅ | base hue only |
+| Random on wake | unibody only | unibody only |
+
+### Known limitations
+
+- **Reactive effects are per-half.** A peripheral only sees its own key
+  presses, so a splash started on the left does not spread onto the right.
+- **Animations drift.** Each side advances its own frame counter, so long
+  travelling effects can slowly fall out of step. Toggling the effect
+  re-aligns them.
+- **Host state is central-only.** Peripherals have no host link, so caps
+  lock, BLE profile and layer state are unavailable there.
 
 ## Overlays
 

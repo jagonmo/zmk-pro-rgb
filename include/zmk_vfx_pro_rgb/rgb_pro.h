@@ -15,5 +15,9 @@
 #define RGB_PRO_CMD_BRT_DN   8
 #define RGB_PRO_CMD_SPD_UP   9
 #define RGB_PRO_CMD_SPD_DN   10
+#define RGB_PRO_CMD_RANDOM   11  /* jump to a random effect now */
+#define RGB_PRO_CMD_DIR_TOG  12  /* reverse animation direction */
+#define RGB_PRO_CMD_DIR_FWD  13
+#define RGB_PRO_CMD_DIR_REV  14
 
 int rgb_pro_command(uint8_t cmd, uint8_t param);
