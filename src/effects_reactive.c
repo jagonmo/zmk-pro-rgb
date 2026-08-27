@@ -14,7 +14,7 @@
 
 /* ---- Recent-press ring (for spatial effects) ---- */
 #define HIST 8
-struct press { uint8_t led; uint16_t frame; bool used; };
+struct press { uint8_t led; int64_t ms; bool used; };
 static struct press hist[HIST];
 static uint8_t hist_head;
 
@@ -22,7 +22,10 @@ static uint8_t hist_head;
 void rgbp_reactive_note_press(uint8_t led); /* fwd */
 void rgbp_reactive_note_press(uint8_t led) {
     hist[hist_head].led = led;
-    hist[hist_head].frame = state.phase;
+    /* Wall-clock, not state.phase: phase rewinds when the direction is
+     * reversed and resets on a random effect change, both of which would
+     * corrupt the age of an in-flight wave. */
+    hist[hist_head].ms = k_uptime_get();
     hist[hist_head].used = true;
     hist_head = (hist_head + 1) % HIST;
 }
@@ -78,7 +81,11 @@ static void e_spatial(int shape, bool multi, bool solid) {
         if (!hist[idx].used) {
             continue;
         }
-        uint16_t age = state.phase - hist[idx].frame;
+        /* Age in animation steps, derived from elapsed time so speed and
+         * direction changes never distort the spread. */
+        int64_t elapsed = k_uptime_get() - hist[idx].ms;
+        if (elapsed < 0) continue;
+        uint16_t age = (uint16_t)(elapsed / CONFIG_RGB_PRO_TICK_MS);
         if (age > 40) {
             continue; /* faded out */
         }
