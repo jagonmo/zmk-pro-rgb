@@ -21,6 +21,20 @@
 #define RGB_PRO_ROWS CONFIG_RGB_PRO_MATRIX_ROWS
 #define RGB_PRO_KEYS CONFIG_RGB_PRO_NUM_KEYS
 
+/* Farthest an LED can be from board center, in dist_center() units.
+ * Used to normalize radial effects (spiral/out-in) against the real
+ * board size instead of a fixed constant, so a 6x14 board and a 4x12
+ * board sweep at comparable perceived speed. */
+#define RGB_PRO_MAX_DIST ((RGB_PRO_COLS - 1) + 2 * (RGB_PRO_ROWS - 1))
+
+/* Shared "speed" reference: all temporal (phase-based) effects target
+ * roughly this many degrees of rotation per tick at state.speed==1, then
+ * divide by their own spatial repeat count (arms/bands/mirrors) so the
+ * angular speed of a single arm looks the same across effects, instead
+ * of the whole-cycle time matching while multi-armed effects appear to
+ * spin faster. See src/effects_base.c / effects_animated.c for use. */
+#define RGB_PRO_SPEED_REF 6
+
 /* ---- Central effect enum ----
  * Order defines the cycle order for RGBP_EFF/RGBP_EFR. */
 enum rgb_pro_effect {

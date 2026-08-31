@@ -85,26 +85,35 @@ static void e_hue_pendulum(void) {
     }
 }
 
-/* Hue wave: a sine-ish hue wave travelling across columns. */
+/* Hue wave: a sine-ish hue wave travelling across columns. The wave
+ * repeats every 360/20 = 18 columns of hue -> on most boards that means
+ * multiple repeats across the width, so scale the temporal term down by
+ * that repeat count, same logic as the radial "arms" effects. */
 static void e_hue_wave(void) {
+    const int repeats = 1 + (RGB_PRO_COLS * 20) / 360;
+    const int k = RGB_PRO_SPEED_REF > repeats ? RGB_PRO_SPEED_REF / repeats : 1;
     for (int i = 0; i < NKEYS; i++) {
-        uint16_t h = (state.hue + (led_col[i] * 20) + state.phase * 3) % 360;
+        uint16_t h = (state.hue + (led_col[i] * 20) + state.phase * k) % 360;
         pixels[i] = rgbp_hsb(h, state.sat, state.brt);
     }
 }
 
-/* Pixel fractal: mirrored moving bands from center columns outward. */
+/* Pixel fractal: mirrored moving bands from center columns outward.
+ * Mirrored left/right = 2 repeats. */
 static void e_pixel_fractal(void) {
+    const int k = RGB_PRO_SPEED_REF / 2 > 0 ? RGB_PRO_SPEED_REF / 2 : 1;
     for (int i = 0; i < NKEYS; i++) {
         int dc = led_col[i] * 2 - (RGB_PRO_COLS - 1);
         if (dc < 0) dc = -dc;
-        uint8_t band = (dc * 16 + state.phase * 4) & 0xFF;
+        uint8_t band = (dc * 16 + state.phase * k) & 0xFF;
         uint8_t v = (uint32_t)state.brt * band / 255;
         pixels[i] = rgbp_hsb(state.hue, state.sat, v);
     }
 }
 
-/* Pixel flow: each LED wanders in brightness pseudo-randomly but smoothly. */
+/* Pixel flow: each LED wanders in brightness pseudo-randomly but smoothly.
+ * Not a rotation/sweep -- there's no "arm count" to normalize against, so
+ * this keeps its own hand-tuned rate rather than RGB_PRO_SPEED_REF. */
 static void e_pixel_flow(void) {
     for (int i = 0; i < NKEYS; i++) {
         uint8_t n = (i * 37 + state.phase * 5) & 0xFF;

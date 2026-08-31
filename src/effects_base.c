@@ -89,13 +89,14 @@ static void e_band_sat(void) {
     }
 }
 
-/* Pinwheel: angle from center drives the band. */
+/* Pinwheel: angle from center drives the band. Single arm (band goes
+ * 0-180-0 once per revolution) -> use the reference speed directly. */
 static void e_band_pinwheel(bool sat) {
     for (int i = 0; i < NKEYS; i++) {
         int dx = led_col[i] * 2 - CX2;
         int dy = led_row[i] * 4 - CY2 * 2;
         uint16_t ang = atan2_deg(dx, dy);
-        int d = (ang + state.phase * 4) % 360;
+        int d = (ang + state.phase * RGB_PRO_SPEED_REF) % 360;
         int band = d < 180 ? d : 360 - d; /* 0-180 triangle */
         if (sat) {
             uint8_t s = state.sat - band * state.sat / 180;
@@ -107,13 +108,18 @@ static void e_band_pinwheel(bool sat) {
     }
 }
 
-/* Spiral: angle + distance from center. */
+/* Spiral: angle + distance from center. The distance term already sweeps
+ * RGB_PRO_MAX_DIST*12 degrees across the board (that's what makes it a
+ * spiral, not a pinwheel) -> that's the "arm count" for this effect, so
+ * the temporal term is scaled down in proportion. */
 static void e_band_spiral(bool sat) {
+    const int arms = 1 + (RGB_PRO_MAX_DIST * 12) / 360;
+    const int k = RGB_PRO_SPEED_REF > arms ? RGB_PRO_SPEED_REF / arms : 1;
     for (int i = 0; i < NKEYS; i++) {
         int dx = led_col[i] * 2 - CX2;
         int dy = led_row[i] * 4 - CY2 * 2;
         uint16_t ang = atan2_deg(dx, dy);
-        int d = (ang + dist_center(i) * 12 + state.phase * 4) % 360;
+        int d = (ang + dist_center(i) * 12 + state.phase * k) % 360;
         int band = d < 180 ? d : 360 - d;
         if (sat) {
             uint8_t s = state.sat - band * state.sat / 180;
@@ -128,21 +134,21 @@ static void e_band_spiral(bool sat) {
 /* ---- Rainbow cycles ---- */
 
 static void e_cycle_all(void) {
-    uint16_t h = (state.hue + state.phase) % 360;
+    uint16_t h = (state.hue + state.phase * RGB_PRO_SPEED_REF) % 360;
     struct led_rgb c = rgbp_hsb(h, state.sat, state.brt);
     for (int i = 0; i < NKEYS; i++) pixels[i] = c;
 }
 
 static void e_cycle_left_right(void) {
     for (int i = 0; i < NKEYS; i++) {
-        uint16_t h = (state.hue + state.phase + led_col[i] * 360 / RGB_PRO_COLS) % 360;
+        uint16_t h = (state.hue + state.phase * RGB_PRO_SPEED_REF + led_col[i] * 360 / RGB_PRO_COLS) % 360;
         pixels[i] = rgbp_hsb(h, state.sat, state.brt);
     }
 }
 
 static void e_cycle_up_down(void) {
     for (int i = 0; i < NKEYS; i++) {
-        uint16_t h = (state.hue + state.phase + led_row[i] * 360 / RGB_PRO_ROWS) % 360;
+        uint16_t h = (state.hue + state.phase * RGB_PRO_SPEED_REF + led_row[i] * 360 / RGB_PRO_ROWS) % 360;
         pixels[i] = rgbp_hsb(h, state.sat, state.brt);
     }
 }
@@ -152,24 +158,31 @@ static void e_moving_chevron(void) {
         int c = led_col[i];
         int r = led_row[i];
         int chev = c + (r < RGB_PRO_ROWS / 2 ? r : RGB_PRO_ROWS - 1 - r);
-        uint16_t h = (state.hue + state.phase + chev * 24) % 360;
+        uint16_t h = (state.hue + state.phase * RGB_PRO_SPEED_REF + chev * 24) % 360;
         pixels[i] = rgbp_hsb(h, state.sat, state.brt);
     }
 }
 
+/* Out-in: distance-from-center already sweeps roughly MAX_DIST*10 degrees
+ * across the board -- that's this effect's "ring count", so scale the
+ * temporal term down to match a single ring's speed to the reference. */
 static void e_cycle_out_in(void) {
+    const int rings = 1 + (RGB_PRO_MAX_DIST * 10) / 360;
+    const int k = RGB_PRO_SPEED_REF > rings ? RGB_PRO_SPEED_REF / rings : 1;
     for (int i = 0; i < NKEYS; i++) {
-        uint16_t h = (state.hue + state.phase + dist_center(i) * 10) % 360;
+        uint16_t h = (state.hue + state.phase * k + dist_center(i) * 10) % 360;
         pixels[i] = rgbp_hsb(h, state.sat, state.brt);
     }
 }
 
 static void e_cycle_out_in_dual(void) {
+    const int rings = 1 + (RGB_PRO_MAX_DIST * 12) / 360;
+    const int k = RGB_PRO_SPEED_REF > rings ? RGB_PRO_SPEED_REF / rings : 1;
     for (int i = 0; i < NKEYS; i++) {
         /* two mirrored halves left/right of center */
         int dc = led_col[i] * 2 - CX2;
         if (dc < 0) dc = -dc;
-        uint16_t h = (state.hue + state.phase + dc * 12) % 360;
+        uint16_t h = (state.hue + state.phase * k + dc * 12) % 360;
         pixels[i] = rgbp_hsb(h, state.sat, state.brt);
     }
 }
@@ -178,16 +191,21 @@ static void e_cycle_pinwheel(void) {
     for (int i = 0; i < NKEYS; i++) {
         int dx = led_col[i] * 2 - CX2;
         int dy = led_row[i] * 4 - CY2 * 2;
-        uint16_t h = (state.hue + state.phase + atan2_deg(dx, dy)) % 360;
+        uint16_t h = (state.hue + state.phase * RGB_PRO_SPEED_REF + atan2_deg(dx, dy)) % 360;
         pixels[i] = rgbp_hsb(h, state.sat, state.brt);
     }
 }
 
+/* Spiral: angle sweeps once per revolution (1 arm), distance adds
+ * roughly MAX_DIST*12 degrees of extra winding -- same "arm count"
+ * logic as e_band_spiral() above. */
 static void e_cycle_spiral(void) {
+    const int arms = 1 + (RGB_PRO_MAX_DIST * 12) / 360;
+    const int k = RGB_PRO_SPEED_REF > arms ? RGB_PRO_SPEED_REF / arms : 1;
     for (int i = 0; i < NKEYS; i++) {
         int dx = led_col[i] * 2 - CX2;
         int dy = led_row[i] * 4 - CY2 * 2;
-        uint16_t h = (state.hue + state.phase + atan2_deg(dx, dy) + dist_center(i) * 12) % 360;
+        uint16_t h = (state.hue + state.phase * k + atan2_deg(dx, dy) + dist_center(i) * 12) % 360;
         pixels[i] = rgbp_hsb(h, state.sat, state.brt);
     }
 }
@@ -198,7 +216,7 @@ static void e_dual_beacon(void) {
     for (int i = 0; i < NKEYS; i++) {
         int dx = led_col[i] * 2 - CX2;
         int dy = led_row[i] * 4 - CY2 * 2;
-        uint16_t ang = (atan2_deg(dx, dy) + state.phase * 6) % 360;
+        uint16_t ang = (atan2_deg(dx, dy) + state.phase * RGB_PRO_SPEED_REF) % 360;
         int band = ang < 180 ? ang : 360 - ang;
         uint8_t v = state.brt * band / 180;
         pixels[i] = rgbp_hsb(state.hue, state.sat, v);
@@ -209,16 +227,20 @@ static void e_rainbow_beacon(void) {
     for (int i = 0; i < NKEYS; i++) {
         int dx = led_col[i] * 2 - CX2;
         int dy = led_row[i] * 4 - CY2 * 2;
-        uint16_t ang = (atan2_deg(dx, dy) + state.phase * 6) % 360;
+        uint16_t ang = (atan2_deg(dx, dy) + state.phase * RGB_PRO_SPEED_REF) % 360;
         pixels[i] = rgbp_hsb((state.hue + ang) % 360, state.sat, state.brt);
     }
 }
 
+/* Rainbow pinwheels: angle is doubled (ang*2) to give the pattern 2 arms
+ * -> halve the reference speed so each arm moves at the same rate as a
+ * single-arm effect. */
 static void e_rainbow_pinwheels(void) {
+    const int k = RGB_PRO_SPEED_REF / 2 > 0 ? RGB_PRO_SPEED_REF / 2 : 1;
     for (int i = 0; i < NKEYS; i++) {
         int dx = led_col[i] * 2 - CX2;
         int dy = led_row[i] * 4 - CY2 * 2;
-        uint16_t ang = (atan2_deg(dx, dy) * 2 + state.phase * 6) % 360;
+        uint16_t ang = (atan2_deg(dx, dy) * 2 + state.phase * k) % 360;
         pixels[i] = rgbp_hsb((state.hue + ang) % 360, state.sat, state.brt);
     }
 }
