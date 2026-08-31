@@ -64,7 +64,7 @@ struct rgb_pro_state state = {
     .hue    = 0,
     .sat    = 100,
     .brt    = CONFIG_RGB_PRO_BRT_START,
-    .speed  = 4,
+    .speed  = CONFIG_RGB_PRO_SPEED_START,
     .dir    = 1,
 };
 

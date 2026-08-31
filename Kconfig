@@ -48,6 +48,14 @@ config RGB_PRO_BRT_STEP
     default 10
     range 1 100
 
+config RGB_PRO_SPEED_START
+    int "Startup animation speed (1-10)"
+    default 4
+    range 1 10
+    help
+      Initial speed for all effects at boot. Matches the range used by
+      RGBP_SPI / RGBP_SPD at runtime (1 = slowest, 10 = fastest).
+
 config RGB_PRO_HUE_STEP
     int "Hue adjustment step (degrees)"
     default 15
