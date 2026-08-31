@@ -57,9 +57,11 @@ static void e_solid(void) {
 }
 
 static void e_breathing(void) {
-    uint8_t p = state.phase & 0xFF;
-    uint8_t tri = (state.phase & 0x100) ? (255 - p) : p;
-    uint8_t v = (uint32_t)state.brt * tri / 255;
+    /* Sine-shaped brightness instead of a linear triangle: the fade
+     * decelerates near full/empty and accelerates through the middle,
+     * which reads as a natural breath rather than a metronome. */
+    uint8_t s = rgbp_sin8((uint8_t)(state.phase & 0xFF));
+    uint8_t v = (uint32_t)state.brt * s / 255;
     struct led_rgb c = rgbp_hsb(state.hue, state.sat, v);
     for (int i = 0; i < NKEYS; i++) pixels[i] = c;
 }

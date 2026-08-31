@@ -63,19 +63,22 @@ static void e_raindrops(bool jellybean) {
 
 /* Hue breathing: whole board one hue, value breathes. */
 static void e_hue_breathing(void) {
-    uint8_t p = state.phase & 0xFF;
-    uint8_t tri = (state.phase & 0x100) ? (255 - p) : p;
-    uint8_t v = (uint32_t)state.brt * tri / 255;
+    /* Same sine-shaped ease as e_breathing() in effects_base.c — see the
+     * comment there for why this reads as more organic than a triangle. */
+    uint8_t s = rgbp_sin8((uint8_t)(state.phase & 0xFF));
+    uint8_t v = (uint32_t)state.brt * s / 255;
     struct led_rgb c = rgbp_hsb(state.hue, state.sat, v);
     for (int i = 0; i < NKEYS; i++) {
         pixels[i] = c;
     }
 }
 
-/* Hue pendulum: hue swings back and forth over a range across columns. */
+/* Hue pendulum: hue swings back and forth over a range across columns.
+ * Sine-shaped swing instead of a linear triangle: a real pendulum
+ * accelerates through center and slows at the extremes, so this reads
+ * as a natural swing rather than a metronome tick. */
 static void e_hue_pendulum(void) {
-    uint8_t p = state.phase & 0xFF;
-    int swing = (state.phase & 0x100) ? (255 - p) : p; /* triangle 0-255 */
+    int swing = rgbp_sin8((uint8_t)(state.phase & 0xFF));
     for (int i = 0; i < NKEYS; i++) {
         uint16_t h = (state.hue + led_col[i] * 8 + swing) % 360;
         pixels[i] = rgbp_hsb(h, state.sat, state.brt);

@@ -102,6 +102,12 @@ extern uint8_t led_row[];
 struct led_rgb rgbp_hsb(uint16_t h, uint8_t s, uint8_t b);
 struct led_rgb rgbp_scale(struct led_rgb c, uint8_t factor);
 
+/* 8-bit sine: theta 0-255 maps to one full cycle, output centered at 128
+ * with range 0-255. Use in place of a linear triangle ramp for any
+ * breathing/oscillating value so it eases in and out like a natural
+ * motion instead of moving at constant speed. */
+uint8_t rgbp_sin8(uint8_t theta);
+
 /* ---- PRNG (defined in effects_animated.c) ---- */
 uint8_t rgbp_rand8(void);
 
