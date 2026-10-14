@@ -41,6 +41,12 @@ static inline bool blink(uint16_t period_ms) {
     return (k_uptime_get() / (period_ms / 2)) & 1;
 }
 
+/* Short bright flash, mostly off — unlike blink(), on_ms is independent
+ * of period_ms so the duty cycle isn't locked to 50%. */
+static inline bool strobe(uint16_t period_ms, uint16_t on_ms) {
+    return (k_uptime_get() % period_ms) < on_ms;
+}
+
 #define OFF   ((struct led_rgb){0, 0, 0})
 #define RED   ((struct led_rgb){255, 0, 0})
 #define GREEN ((struct led_rgb){0, 255, 0})
@@ -53,7 +59,12 @@ static void caps_overlay(void) {
     zmk_hid_indicators_t ind = zmk_hid_indicators_get_current_profile();
     if (!(ind & 0x02)) return; /* bit 1 = caps lock (USB HID spec) */
 
-    struct led_rgb c = blink(CONFIG_RGB_PRO_CAPS_BLINK_MS)
+#if IS_ENABLED(CONFIG_RGB_PRO_CAPS_STYLE_STROBE)
+    bool lit = strobe(CONFIG_RGB_PRO_CAPS_STROBE_PERIOD_MS, CONFIG_RGB_PRO_CAPS_STROBE_ON_MS);
+#else
+    bool lit = blink(CONFIG_RGB_PRO_CAPS_BLINK_MS);
+#endif
+    struct led_rgb c = lit
         ? (struct led_rgb){CONFIG_RGB_PRO_CAPS_R,
                            CONFIG_RGB_PRO_CAPS_G,
                            CONFIG_RGB_PRO_CAPS_B}

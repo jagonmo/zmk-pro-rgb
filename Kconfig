@@ -129,9 +129,42 @@ config RGB_PRO_CAPS_B
     int "Caps indicator blue (0-255)"
     default 0
 
+choice RGB_PRO_CAPS_STYLE
+    prompt "Caps-lock indicator style"
+    default RGB_PRO_CAPS_STYLE_BLINK
+
+config RGB_PRO_CAPS_STYLE_BLINK
+    bool "Blink (even on/off)"
+    help
+      Key is on for half the cycle, off for the other half.
+
+config RGB_PRO_CAPS_STYLE_STROBE
+    bool "Strobe (short bright flash, mostly off)"
+    help
+      Key flashes briefly then stays off for most of the cycle, like a
+      camera strobe rather than an even on/off blink.
+
+endchoice
+
 config RGB_PRO_CAPS_BLINK_MS
     int "Caps blink cycle (ms)"
+    depends on RGB_PRO_CAPS_STYLE_BLINK
     default 1000
+
+config RGB_PRO_CAPS_STROBE_PERIOD_MS
+    int "Caps strobe cycle (ms)"
+    depends on RGB_PRO_CAPS_STYLE_STROBE
+    default 150
+    help
+      Total time from the start of one flash to the start of the next.
+
+config RGB_PRO_CAPS_STROBE_ON_MS
+    int "Caps strobe flash width (ms)"
+    depends on RGB_PRO_CAPS_STYLE_STROBE
+    default 30
+    help
+      How long the flash stays lit within each strobe cycle. Must be
+      smaller than RGB_PRO_CAPS_STROBE_PERIOD_MS.
 
 endif # RGB_PRO_CAPS_INDICATOR
 
