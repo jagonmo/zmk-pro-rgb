@@ -138,11 +138,11 @@ config RGB_PRO_CAPS_STYLE_BLINK
     help
       Key is on for half the cycle, off for the other half.
 
-config RGB_PRO_CAPS_STYLE_STROBE
-    bool "Strobe (short bright flash, mostly off)"
+config RGB_PRO_CAPS_STYLE_DOUBLE
+    bool "Double pulse (two flashes, pause, repeat)"
     help
-      Key flashes briefly then stays off for most of the cycle, like a
-      camera strobe rather than an even on/off blink.
+      Key flashes twice in quick succession, then stays off for a longer
+      pause before the next pair.
 
 endchoice
 
@@ -151,20 +151,25 @@ config RGB_PRO_CAPS_BLINK_MS
     depends on RGB_PRO_CAPS_STYLE_BLINK
     default 1000
 
-config RGB_PRO_CAPS_STROBE_PERIOD_MS
-    int "Caps strobe cycle (ms)"
-    depends on RGB_PRO_CAPS_STYLE_STROBE
-    default 150
+config RGB_PRO_CAPS_DOUBLE_ON_MS
+    int "Caps double-pulse flash width (ms)"
+    depends on RGB_PRO_CAPS_STYLE_DOUBLE
+    default 100
     help
-      Total time from the start of one flash to the start of the next.
+      How long each of the two flashes stays lit. The frame tick is about
+      33 ms, so values below that may be skipped.
 
-config RGB_PRO_CAPS_STROBE_ON_MS
-    int "Caps strobe flash width (ms)"
-    depends on RGB_PRO_CAPS_STYLE_STROBE
-    default 30
+config RGB_PRO_CAPS_DOUBLE_GAP_MS
+    int "Caps double-pulse gap between the two flashes (ms)"
+    depends on RGB_PRO_CAPS_STYLE_DOUBLE
+    default 100
+
+config RGB_PRO_CAPS_DOUBLE_PAUSE_MS
+    int "Caps double-pulse pause after the second flash (ms)"
+    depends on RGB_PRO_CAPS_STYLE_DOUBLE
+    default 700
     help
-      How long the flash stays lit within each strobe cycle. Must be
-      smaller than RGB_PRO_CAPS_STROBE_PERIOD_MS.
+      Full cycle = 2 x flash width + gap + pause.
 
 endif # RGB_PRO_CAPS_INDICATOR
 

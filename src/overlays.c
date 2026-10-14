@@ -41,10 +41,12 @@ static inline bool blink(uint16_t period_ms) {
     return (k_uptime_get() / (period_ms / 2)) & 1;
 }
 
-/* Short bright flash, mostly off — unlike blink(), on_ms is independent
- * of period_ms so the duty cycle isn't locked to 50%. */
-static inline bool strobe(uint16_t period_ms, uint16_t on_ms) {
-    return (k_uptime_get() % period_ms) < on_ms;
+/* Two flashes, a gap between them, then a longer pause, repeating.
+ * Timeline per cycle: [on_ms lit][gap_ms off][on_ms lit][pause_ms off] */
+static inline bool double_pulse(uint16_t on_ms, uint16_t gap_ms, uint16_t pause_ms) {
+    uint32_t period = 2u * on_ms + gap_ms + pause_ms;
+    uint32_t t = (uint32_t)(k_uptime_get() % period);
+    return t < on_ms || (t >= on_ms + gap_ms && t < 2u * on_ms + gap_ms);
 }
 
 #define OFF   ((struct led_rgb){0, 0, 0})
@@ -59,8 +61,10 @@ static void caps_overlay(void) {
     zmk_hid_indicators_t ind = zmk_hid_indicators_get_current_profile();
     if (!(ind & 0x02)) return; /* bit 1 = caps lock (USB HID spec) */
 
-#if IS_ENABLED(CONFIG_RGB_PRO_CAPS_STYLE_STROBE)
-    bool lit = strobe(CONFIG_RGB_PRO_CAPS_STROBE_PERIOD_MS, CONFIG_RGB_PRO_CAPS_STROBE_ON_MS);
+#if IS_ENABLED(CONFIG_RGB_PRO_CAPS_STYLE_DOUBLE)
+    bool lit = double_pulse(CONFIG_RGB_PRO_CAPS_DOUBLE_ON_MS,
+                            CONFIG_RGB_PRO_CAPS_DOUBLE_GAP_MS,
+                            CONFIG_RGB_PRO_CAPS_DOUBLE_PAUSE_MS);
 #else
     bool lit = blink(CONFIG_RGB_PRO_CAPS_BLINK_MS);
 #endif
