@@ -243,6 +243,45 @@ config RGB_PRO_BATTERY_RED_BELOW
 
 endif # RGB_PRO_BATTERY_INDICATOR
 
+# --- Windows Dynamic Lighting ---
+
+config RGB_PRO_LAMP_ARRAY
+    bool "Windows Dynamic Lighting (HID LampArray over USB)"
+    depends on ZMK_USB
+    help
+      Lets Windows 11 (Settings -> Personalization -> Dynamic Lighting)
+      drive the per-key LEDs through the open HID LampArray standard,
+      with no vendor software.
+
+      Adds a second USB HID interface (HID_1) next to ZMK's keyboard
+      interface. It needs CONFIG_USB_HID_DEVICE_COUNT=2 in your .conf; the
+      build stops with an explicit message if it is missing. Set that value
+      only together with this option, because an unregistered HID_1 would
+      be enumerated with an empty descriptor.
+
+      USB only: it does not work over Bluetooth. Until Windows takes
+      control the normal effects run, and the status overlays (caps lock,
+      BLE/USB, battery) stay on top of the Windows frame.
+
+if RGB_PRO_LAMP_ARRAY
+
+config RGB_PRO_LAMP_ARRAY_PITCH_UM
+    int "Distance between neighbouring keys (micrometres)"
+    default 19050
+    help
+      Used to report each lamp's physical position to Windows from its
+      matrix column and row. 19050 is the standard 19.05 mm key pitch.
+
+config RGB_PRO_LAMP_ARRAY_APPLY_BRT
+    bool "Scale Windows colours by the keyboard brightness"
+    default y
+    help
+      When enabled, the brightness set with &rgb_pro (RGBP_BRI / RGBP_BRD)
+      also caps the colours sent by Windows. Disable it to show Windows'
+      colours exactly as sent.
+
+endif # RGB_PRO_LAMP_ARRAY
+
 endif # RGB_PRO
 
 config ZMK_BEHAVIOR_RGB_PRO

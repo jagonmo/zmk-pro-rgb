@@ -16,6 +16,7 @@ itself is hardware-agnostic.
 - **36 effects** — base patterns, animated, per-key reactive, and custom
 - **Per-key reactivity** — splash, cross, heatmap, digital rain
 - **Status overlays** — caps lock, BLE/USB output, active profile, battery
+- **Windows Dynamic Lighting** — optional HID LampArray over USB, no vendor software
 - **Runtime controls** — hue, brightness, speed, effect cycling
 - **Random on wake** — a fresh effect and colour every time you come back
 - **Split support** — both halves stay in sync through ZMK's global behaviour locality
@@ -314,6 +315,57 @@ Needs `CONFIG_ZMK_BATTERY_REPORTING=y` and a `zmk,battery` chosen node.
 | Status   | `CONFIG_ZMK_BLE=y`                |
 | Battery  | `CONFIG_ZMK_BATTERY_REPORTING=y`  |
 
+## Windows Dynamic Lighting (HID LampArray)
+
+On Windows 11 the keyboard can show up under **Settings → Personalization →
+Dynamic Lighting**, where Windows sets brightness, colour and effects without
+any vendor software. It uses the open HID LampArray standard (HID Usage Tables
+1.4, page 0x59).
+
+Enable it in your `.conf`. Both lines go together:
+
+```
+CONFIG_USB_HID_DEVICE_COUNT=2
+CONFIG_RGB_PRO_LAMP_ARRAY=y
+```
+
+How it behaves:
+
+- LampArray is a **second USB HID interface** (`HID_1`) next to ZMK's keyboard
+  interface. ZMK itself is not modified, and the keyboard descriptor, Bluetooth
+  HID service and existing bonds are untouched.
+- Until Windows takes control, the normal effects run. While Windows has
+  control, its colours replace the effect. The status overlays (caps lock,
+  BLE/USB, battery) still draw on top, and `&rgb_pro` on/off still applies.
+- By default the brightness set with `RGBP_BRI` / `RGBP_BRD` also caps the
+  colours Windows sends. Set `CONFIG_RGB_PRO_LAMP_ARRAY_APPLY_BRT=n` to show
+  them exactly as sent.
+- Unplugging the cable returns the keyboard to its own effects.
+- Each lamp's position is derived from its matrix column and row and the key
+  pitch (`CONFIG_RGB_PRO_LAMP_ARRAY_PITCH_UM`, default 19.05 mm), so spatial
+  effects follow your layout only as far as the matrix does.
+
+Limits:
+
+- **USB only.** Over Bluetooth the keyboard keeps running its own effects.
+- On a split keyboard only the central half's LEDs follow Windows.
+- Only a real disconnect (VBUS lost) hands the lamps back to the keyboard. If
+  the PC restarts while the cable stays powered, the keyboard keeps showing
+  the last Windows frame until Windows takes control again or you replug it.
+- Windows caches the USB descriptors. After the first flash with this option,
+  unplug and replug the keyboard; if it does not appear, remove the device in
+  Device Manager and plug it in again.
+- Lamps are not mapped to key codes (`InputBinding` is 0), so Windows cannot
+  tell which key a lamp sits behind.
+- Set `CONFIG_USB_HID_DEVICE_COUNT=2` only together with
+  `CONFIG_RGB_PRO_LAMP_ARRAY=y`. Enabling the option without it stops the build
+  with an explicit message.
+
+The report descriptor and report layouts are Microsoft's, from
+[ArduinoHidForWindows](https://github.com/microsoft/ArduinoHidForWindows) and
+[RP2040MacropadHidSample](https://github.com/microsoft/RP2040MacropadHidSample)
+(MIT licence).
+
 ## Kconfig Reference
 
 | Option                          | Default | Description                       |
@@ -344,6 +396,9 @@ Needs `CONFIG_ZMK_BATTERY_REPORTING=y` and a `zmk,battery` chosen node.
 | `CONFIG_RGB_PRO_BATTERY_LAYER`  | 1       | Layer that shows the battery bar  |
 | `CONFIG_RGB_PRO_BATTERY_KEY_START` | 0    | First key of the bar              |
 | `CONFIG_RGB_PRO_BATTERY_KEY_COUNT` | 4    | Number of keys in the bar         |
+| `CONFIG_RGB_PRO_LAMP_ARRAY`     | n       | Windows Dynamic Lighting over USB |
+| `CONFIG_RGB_PRO_LAMP_ARRAY_PITCH_UM` | 19050 | Key pitch reported to Windows (µm) |
+| `CONFIG_RGB_PRO_LAMP_ARRAY_APPLY_BRT` | y | Cap Windows colours with the keyboard brightness |
 
 ## License
 
