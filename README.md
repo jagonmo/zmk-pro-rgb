@@ -257,11 +257,11 @@ the same on both sides.
 | Effects and animation | ✅ | ✅ |
 | Commands (toggle, effect, hue, brightness, speed) | ✅ | ✅ synced |
 | Reactive effects | own keys | own keys |
-| Caps lock overlay | ✅ | — |
+| Caps lock overlay | ✅ | ✅ behind a dongle only (see below) |
 | BLE/USB status overlay | ✅ | — |
 | Battery overlay | ✅ | — |
 | Layer Color effect | ✅ | base hue only |
-| Random on wake | unibody only | unibody only |
+| Random on wake | unibody only | single peripheral behind a dongle only |
 
 ### Known limitations
 
@@ -271,7 +271,29 @@ the same on both sides.
   travelling effects can slowly fall out of step. Toggling the effect
   re-aligns them.
 - **Host state is central-only.** Peripherals have no host link, so caps
-  lock, BLE profile and layer state are unavailable there.
+  lock, BLE profile and layer state are unavailable there. The one exception
+  is caps lock behind a dongle (below).
+
+### Behind a dongle
+
+A unibody keyboard can run as the only peripheral of a dongle (a central with
+no keys and no LEDs). ZMK's split link carries only key events, behavior
+invocations and HID indicators, so:
+
+- **Lighting commands.** On the dongle set `CONFIG_RGB_PRO_FORWARD_ONLY=y`.
+  It builds only the `&rgb_pro` behavior, which ZMK forwards to the keyboard
+  by device name, so the dongle needs the same `rgb_pro: rgbpro` node as the
+  keyboard. On the dongle the command itself does nothing.
+- **Keyboard.** Set `CONFIG_RGB_PRO_DONGLE_PERIPHERAL=y`. There is no sibling
+  half, so `CONFIG_RGB_PRO_RANDOM_ON_WAKE` is allowed again.
+- **Caps lock.** Set `CONFIG_ZMK_HID_INDICATORS=y` and
+  `CONFIG_ZMK_SPLIT_PERIPHERAL_HID_INDICATORS=y` on **both** the dongle and
+  the keyboard. The dongle sends the state when it changes, not when the
+  keyboard reconnects, so after a reboot the overlay catches up at the next
+  caps toggle.
+- **Not available behind a dongle:** the status and battery overlays (they
+  depend on the active layer and BLE profile, which the keyboard cannot see)
+  and HID LampArray (it needs USB on the keyboard itself).
 
 ## Overlays
 
@@ -382,6 +404,8 @@ The report descriptor and report layouts are Microsoft's, from
 | `CONFIG_RGB_PRO_START_ON`       | y       | Start with RGB on                 |
 | `CONFIG_RGB_PRO_AUTO_OFF_IDLE`  | y       | Turn off when idle                |
 | `CONFIG_RGB_PRO_RANDOM_ON_WAKE` | n       | Random effect after each idle wake |
+| `CONFIG_RGB_PRO_FORWARD_ONLY`   | n       | Dongle: forward `&rgb_pro` to the keyboard, no LEDs |
+| `CONFIG_RGB_PRO_DONGLE_PERIPHERAL` | n     | Keyboard is the only peripheral of a dongle |
 | `CONFIG_RGB_PRO_CAPS_INDICATOR` | n       | Enable caps-lock overlay          |
 | `CONFIG_RGB_PRO_CAPS_KEY`       | 0       | Key position of the caps key      |
 | `CONFIG_RGB_PRO_CAPS_R/G/B`     | 0/255/0 | Caps indicator colour             |

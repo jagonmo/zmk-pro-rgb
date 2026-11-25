@@ -13,6 +13,9 @@
 
 #if defined(CONFIG_RGB_PRO_CAPS_INDICATOR) && RGB_PRO_IS_CENTRAL
 #include <zmk/hid_indicators.h>
+#elif defined(CONFIG_RGB_PRO_CAPS_INDICATOR) && RGB_PRO_HAS_HOST_INDICATORS
+#include <zmk/event_manager.h>
+#include <zmk/events/hid_indicators_changed.h>
 #endif
 
 #if defined(CONFIG_RGB_PRO_STATUS_OVERLAY) && RGB_PRO_IS_CENTRAL
@@ -55,10 +58,30 @@ static inline bool double_pulse(uint16_t on_ms, uint16_t gap_ms, uint16_t pause_
 #define BLUE  ((struct led_rgb){0, 0, 255})
 #define DIM_W ((struct led_rgb){12, 12, 12})
 
-/* ---- Caps lock (central only: HID indicators come from the host) ---- */
-#if defined(CONFIG_RGB_PRO_CAPS_INDICATOR) && RGB_PRO_IS_CENTRAL
+/* ---- Caps lock (HID indicators come from the host) ---- */
+#if defined(CONFIG_RGB_PRO_CAPS_INDICATOR) && RGB_PRO_HAS_HOST_INDICATORS
+#if RGB_PRO_IS_CENTRAL
+static inline zmk_hid_indicators_t host_indicators(void) {
+    return zmk_hid_indicators_get_current_profile();
+}
+#else
+/* Peripheral behind a dongle: the state arrives as an event from the central,
+ * and only when it changes. Keep the last value. */
+static volatile zmk_hid_indicators_t peripheral_indicators;
+
+static int host_indicators_listener(const zmk_event_t *eh) {
+    const struct zmk_hid_indicators_changed *ev = as_zmk_hid_indicators_changed(eh);
+    if (ev) peripheral_indicators = ev->indicators;
+    return ZMK_EV_EVENT_BUBBLE;
+}
+ZMK_LISTENER(rgbp_host_indicators, host_indicators_listener);
+ZMK_SUBSCRIPTION(rgbp_host_indicators, zmk_hid_indicators_changed);
+
+static inline zmk_hid_indicators_t host_indicators(void) { return peripheral_indicators; }
+#endif
+
 static void caps_overlay(void) {
-    zmk_hid_indicators_t ind = zmk_hid_indicators_get_current_profile();
+    zmk_hid_indicators_t ind = host_indicators();
     if (!(ind & 0x02)) return; /* bit 1 = caps lock (USB HID spec) */
 
 #if IS_ENABLED(CONFIG_RGB_PRO_CAPS_STYLE_DOUBLE)

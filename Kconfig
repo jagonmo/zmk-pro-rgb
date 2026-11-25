@@ -84,10 +84,21 @@ config RGB_PRO_AUTO_OFF_IDLE
     bool "Turn off LEDs when keyboard is idle"
     default y
 
+config RGB_PRO_DONGLE_PERIPHERAL
+    bool "This keyboard is the only part behind a dongle"
+    depends on ZMK_SPLIT && !ZMK_SPLIT_ROLE_CENTRAL
+    help
+      Set this on a unibody keyboard that runs as the single split
+      peripheral of a dongle. There is no sibling half to keep in step, so
+      options that only make sense on a keyboard with one lighting state
+      (random effect on wake) are allowed again.
+
+      Do not set it on a half of a two-part split keyboard.
+
 config RGB_PRO_RANDOM_ON_WAKE
     bool "Pick a random effect on boot and when waking"
     default n
-    depends on !ZMK_SPLIT
+    depends on !ZMK_SPLIT || RGB_PRO_DONGLE_PERIPHERAL
     help
       Jump to a randomly chosen effect at power-on and every time the
       keyboard wakes from idle. Deep sleep resets the SoC, so waking from
@@ -96,8 +107,10 @@ config RGB_PRO_RANDOM_ON_WAKE
       Effects that paint from a single base colour also get a random hue;
       rainbow-style effects keep their own palette.
 
-      Unavailable on split keyboards: each half tracks idle independently,
-      so they would wake at different moments and roll different effects.
+      Unavailable on a keyboard split into halves: each half tracks idle
+      independently, so they would wake at different moments and roll
+      different effects. Allowed on the single peripheral of a dongle
+      (RGB_PRO_DONGLE_PERIPHERAL).
 
 # --- Overlays (drawn on top of the running effect) ---
 #
@@ -110,6 +123,11 @@ config RGB_PRO_CAPS_INDICATOR
     help
       Blinks a key while caps lock is active. Requires
       CONFIG_ZMK_HID_INDICATORS=y.
+
+      On a peripheral behind a dongle it also needs
+      CONFIG_ZMK_SPLIT_PERIPHERAL_HID_INDICATORS=y on BOTH the dongle and
+      the keyboard. The dongle sends the state only when it changes, so after
+      the keyboard reboots the indicator catches up at the next caps toggle.
 
 if RGB_PRO_CAPS_INDICATOR
 
@@ -283,6 +301,18 @@ config RGB_PRO_LAMP_ARRAY_APPLY_BRT
 endif # RGB_PRO_LAMP_ARRAY
 
 endif # RGB_PRO
+
+config RGB_PRO_FORWARD_ONLY
+    bool "Forward-only: pass &rgb_pro commands on to the keyboard (dongle)"
+    depends on ZMK_SPLIT && ZMK_SPLIT_ROLE_CENTRAL && !RGB_PRO
+    help
+      For a dongle: a central with no LEDs. Builds only the &rgb_pro
+      behavior, so a key bound to it on the dongle is forwarded to the
+      keyboard (peripheral), which runs RGB_PRO and applies the command. On
+      the dongle itself the command does nothing.
+
+      The dongle needs the same `rgb_pro: rgbpro` behavior node as the
+      keyboard: ZMK forwards the behavior to the peripheral by device name.
 
 config ZMK_BEHAVIOR_RGB_PRO
     bool

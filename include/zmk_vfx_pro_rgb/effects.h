@@ -16,6 +16,15 @@
 #define RGB_PRO_IS_CENTRAL 0
 #endif
 
+/* Host indicators (caps lock...) are available directly on the central, and on
+ * a peripheral when the dongle forwards them (SPLIT_PERIPHERAL_HID_INDICATORS
+ * on both sides). */
+#if RGB_PRO_IS_CENTRAL || defined(CONFIG_ZMK_SPLIT_PERIPHERAL_HID_INDICATORS)
+#define RGB_PRO_HAS_HOST_INDICATORS 1
+#else
+#define RGB_PRO_HAS_HOST_INDICATORS 0
+#endif
+
 /* Matrix geometry from Kconfig (set by the user's .conf). */
 #define RGB_PRO_COLS CONFIG_RGB_PRO_MATRIX_COLS
 #define RGB_PRO_ROWS CONFIG_RGB_PRO_MATRIX_ROWS

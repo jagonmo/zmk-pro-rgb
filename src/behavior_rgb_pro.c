@@ -5,9 +5,21 @@
 #include <zephyr/logging/log.h>
 
 #include <zmk/behavior.h>
+#if IS_ENABLED(CONFIG_RGB_PRO_FORWARD_ONLY)
+/* Dongle: no LED strip, so none of the effect code is built. The behavior only
+ * has to exist so ZMK forwards it; rgb_pro_command() is a no-op here. */
+LOG_MODULE_REGISTER(rgb_pro_fwd, CONFIG_ZMK_LOG_LEVEL);
+
+int rgb_pro_command(uint8_t cmd, uint8_t param) {
+    ARG_UNUSED(cmd);
+    ARG_UNUSED(param);
+    return 0;
+}
+#else
 #include <zmk_vfx_pro_rgb/rgb_pro.h>
 
 LOG_MODULE_DECLARE(rgb_pro, CONFIG_ZMK_LOG_LEVEL);
+#endif
 
 #if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)
 
