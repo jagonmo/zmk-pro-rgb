@@ -258,8 +258,8 @@ the same on both sides.
 | Commands (toggle, effect, hue, brightness, speed) | ✅ | ✅ synced |
 | Reactive effects | own keys | own keys |
 | Caps lock overlay | ✅ | ✅ behind a dongle only (see below) |
-| BLE/USB status overlay | ✅ | — |
-| Battery overlay | ✅ | — |
+| BLE/USB status overlay | ✅ | ✅ behind a dongle only (see below) |
+| Battery overlay | ✅ | ✅ behind a dongle only (own battery) |
 | Layer Color effect | ✅ | base hue only |
 | Random on wake | unibody only | single peripheral behind a dongle only |
 
@@ -271,8 +271,8 @@ the same on both sides.
   travelling effects can slowly fall out of step. Toggling the effect
   re-aligns them.
 - **Host state is central-only.** Peripherals have no host link, so caps
-  lock, BLE profile and layer state are unavailable there. The one exception
-  is caps lock behind a dongle (below).
+  lock, BLE profile and layer state are unavailable there. The exception is a
+  keyboard behind a dongle (below), which receives them from the dongle.
 
 ### Behind a dongle
 
@@ -291,9 +291,20 @@ invocations and HID indicators, so:
   the keyboard. The dongle sends the state when it changes, not when the
   keyboard reconnects, so after a reboot the overlay catches up at the next
   caps toggle.
-- **Not available behind a dongle:** the status and battery overlays (they
-  depend on the active layer and BLE profile, which the keyboard cannot see)
-  and HID LampArray (it needs USB on the keyboard itself).
+- **Status and battery overlays.** Both are shown on a layer, and the status
+  overlay shows the dongle's host link, neither of which the keyboard can see.
+  With `CONFIG_RGB_PRO_FORWARD_SYNC=y` (default with `FORWARD_ONLY`) the dongle
+  sends the active layer and its BLE/output state to the keyboard, and the
+  keyboard draws the overlays. The battery bar shows the keyboard's own
+  battery. The state is sent when it changes and repeated every
+  `CONFIG_RGB_PRO_SYNC_PERIOD_MS` (default 2000), which is what brings a
+  keyboard that just woke up or reconnected up to date: the dongle has no
+  "peripheral connected" event and ZMK drops commands for a peripheral that
+  is not ready. Set the same `CONFIG_RGB_PRO_STATUS_*` and
+  `CONFIG_RGB_PRO_BATTERY_*` options on the keyboard as you would on a
+  unibody board.
+- **Not available behind a dongle:** HID LampArray (it needs USB on the
+  keyboard itself).
 
 ## Overlays
 
@@ -406,6 +417,8 @@ The report descriptor and report layouts are Microsoft's, from
 | `CONFIG_RGB_PRO_RANDOM_ON_WAKE` | n       | Random effect after each idle wake |
 | `CONFIG_RGB_PRO_FORWARD_ONLY`   | n       | Dongle: forward `&rgb_pro` to the keyboard, no LEDs |
 | `CONFIG_RGB_PRO_DONGLE_PERIPHERAL` | n     | Keyboard is the only peripheral of a dongle |
+| `CONFIG_RGB_PRO_FORWARD_SYNC`   | y       | Dongle: send layer and BLE state to the keyboard |
+| `CONFIG_RGB_PRO_SYNC_PERIOD_MS` | 2000    | Dongle: how often that state is repeated |
 | `CONFIG_RGB_PRO_CAPS_INDICATOR` | n       | Enable caps-lock overlay          |
 | `CONFIG_RGB_PRO_CAPS_KEY`       | 0       | Key position of the caps key      |
 | `CONFIG_RGB_PRO_CAPS_R/G/B`     | 0/255/0 | Caps indicator colour             |

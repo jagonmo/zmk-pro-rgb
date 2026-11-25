@@ -10,6 +10,7 @@
  */
 
 #include <zmk_vfx_pro_rgb/effects.h>
+#include <zmk_vfx_pro_rgb/commands.h>
 
 #if defined(CONFIG_RGB_PRO_CAPS_INDICATOR) && RGB_PRO_IS_CENTRAL
 #include <zmk/hid_indicators.h>
@@ -58,6 +59,24 @@ static inline bool double_pulse(uint16_t on_ms, uint16_t gap_ms, uint16_t pause_
 #define BLUE  ((struct led_rgb){0, 0, 255})
 #define DIM_W ((struct led_rgb){12, 12, 12})
 
+/* ---- State received from the dongle (used on a peripheral behind one) ---- */
+static volatile uint8_t synced_layer;
+static volatile uint8_t synced_status;
+
+void rgbp_sync_layer(uint8_t layer)   { synced_layer = layer; }
+void rgbp_sync_status(uint8_t packed) { synced_status = packed; }
+
+#if (defined(CONFIG_RGB_PRO_STATUS_OVERLAY) || defined(CONFIG_RGB_PRO_BATTERY_INDICATOR)) && \
+    RGB_PRO_HAS_LAYER_STATE
+static inline uint8_t overlay_layer(void) {
+#if RGB_PRO_IS_CENTRAL
+    return zmk_keymap_highest_layer_active();
+#else
+    return synced_layer;
+#endif
+}
+#endif
+
 /* ---- Caps lock (HID indicators come from the host) ---- */
 #if defined(CONFIG_RGB_PRO_CAPS_INDICATOR) && RGB_PRO_HAS_HOST_INDICATORS
 #if RGB_PRO_IS_CENTRAL
@@ -102,31 +121,51 @@ static void caps_overlay(void) {
 static void caps_overlay(void) {}
 #endif
 
-/* ---- BLE / USB status (central only: peripherals have no host link) ---- */
-#if defined(CONFIG_RGB_PRO_STATUS_OVERLAY) && RGB_PRO_IS_CENTRAL
+/* ---- BLE / USB status (host link: read on the central, from the dongle on a peripheral) ---- */
+#if defined(CONFIG_RGB_PRO_STATUS_OVERLAY) && RGB_PRO_HAS_LAYER_STATE
+struct status_view {
+    bool usb;     /* selected output is USB */
+    int active;   /* active BLE profile */
+    int state;    /* RGB_PRO_BT_* */
+};
+
+static struct status_view status_now(void) {
+#if RGB_PRO_IS_CENTRAL
+    struct status_view v;
+    v.usb = zmk_endpoint_get_selected().transport == ZMK_TRANSPORT_USB;
+    v.active = zmk_ble_active_profile_index();
+    v.state = zmk_ble_active_profile_is_connected() ? RGB_PRO_BT_CONNECTED
+            : zmk_ble_active_profile_is_open()      ? RGB_PRO_BT_OPEN
+                                                    : RGB_PRO_BT_PAIRED;
+    return v;
+#else
+    uint8_t s = synced_status;
+    return (struct status_view){.usb = RGB_PRO_STATUS_USB(s),
+                                .active = RGB_PRO_STATUS_PROFILE(s),
+                                .state = RGB_PRO_STATUS_STATE(s)};
+#endif
+}
+
 static void status_overlay(void) {
-    if (zmk_keymap_highest_layer_active() != CONFIG_RGB_PRO_STATUS_LAYER) return;
+    if (overlay_layer() != CONFIG_RGB_PRO_STATUS_LAYER) return;
 
     bool on = blink(CONFIG_RGB_PRO_STATUS_BLINK_MS);
+    struct status_view sv = status_now();
 
     /* Output selector: blue = BLE, red = USB. */
-    struct zmk_endpoint_instance ep = zmk_endpoint_get_selected();
-    paint_key(CONFIG_RGB_PRO_STATUS_OUT_KEY,
-              ep.transport == ZMK_TRANSPORT_USB ? RED : BLUE);
+    paint_key(CONFIG_RGB_PRO_STATUS_OUT_KEY, sv.usb ? RED : BLUE);
 
     /* Profile keys. Only the active profile's real state is queryable
      * through ZMK's public API; the rest are shown dim. */
-    int active = zmk_ble_active_profile_index();
-
     for (int i = 0; i < CONFIG_RGB_PRO_STATUS_BT_COUNT; i++) {
         uint8_t pos = CONFIG_RGB_PRO_STATUS_BT_KEY_BASE + i;
         struct led_rgb c;
 
-        if (i != active) {
+        if (i != sv.active) {
             c = DIM_W;
-        } else if (zmk_ble_active_profile_is_connected()) {
+        } else if (sv.state == RGB_PRO_BT_CONNECTED) {
             c = BLUE;                       /* connected: solid blue */
-        } else if (zmk_ble_active_profile_is_open()) {
+        } else if (sv.state == RGB_PRO_BT_OPEN) {
             c = on ? GREEN : OFF;           /* unpaired: blinking green */
         } else {
             c = on ? BLUE : OFF;            /* paired, not connected: blinking blue */
@@ -139,9 +178,9 @@ static void status_overlay(void) {}
 #endif
 
 /* ---- Battery level (each half shows its own pack) ---- */
-#if defined(CONFIG_RGB_PRO_BATTERY_INDICATOR) && RGB_PRO_IS_CENTRAL
+#if defined(CONFIG_RGB_PRO_BATTERY_INDICATOR) && RGB_PRO_HAS_LAYER_STATE
 static void battery_overlay(void) {
-    if (zmk_keymap_highest_layer_active() != CONFIG_RGB_PRO_BATTERY_LAYER) return;
+    if (overlay_layer() != CONFIG_RGB_PRO_BATTERY_LAYER) return;
 
     uint8_t pct = zmk_battery_state_of_charge();
     const int count = CONFIG_RGB_PRO_BATTERY_KEY_COUNT;

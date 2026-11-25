@@ -177,8 +177,12 @@ static void stop_anim(void) { k_work_cancel_delayable(&rgb_pro_work); clear_stri
 static void randomize_effect(void);
 
 int rgb_pro_command(uint8_t cmd, uint8_t param) {
-    ARG_UNUSED(param);
     switch (cmd) {
+    /* Sync from the dongle: store and return. Falling through to the
+     * start/stop below would relight an idle keyboard on every resend. */
+    case RGB_PRO_CMD_SYNC_LAYER:  rgbp_sync_layer(param);  return 0;
+    case RGB_PRO_CMD_SYNC_STATUS: rgbp_sync_status(param); return 0;
+
     case RGB_PRO_CMD_TOGGLE:   state.on = !state.on; break;
     case RGB_PRO_CMD_ON:       state.on = true; break;
     case RGB_PRO_CMD_OFF:      state.on = false; break;

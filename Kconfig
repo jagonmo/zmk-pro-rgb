@@ -201,6 +201,9 @@ config RGB_PRO_STATUS_OVERLAY
       blinking green = unpaired). Non-active profiles are shown dim,
       because ZMK only exposes the active profile's state publicly.
 
+      Behind a dongle (RGB_PRO_DONGLE_PERIPHERAL) it shows the dongle's host
+      link; the dongle needs RGB_PRO_FORWARD_SYNC for that.
+
 if RGB_PRO_STATUS_OVERLAY
 
 config RGB_PRO_STATUS_LAYER
@@ -235,6 +238,9 @@ config RGB_PRO_BATTERY_INDICATOR
       While the chosen layer is active, shows the battery level as a bar
       that fills across a run of keys and sweeps from red (empty) to
       green (full). Requires CONFIG_ZMK_BATTERY_REPORTING=y.
+
+      Behind a dongle it shows the keyboard's own battery, on the layer the
+      dongle reports (RGB_PRO_FORWARD_SYNC on the dongle).
 
 if RGB_PRO_BATTERY_INDICATOR
 
@@ -313,6 +319,30 @@ config RGB_PRO_FORWARD_ONLY
 
       The dongle needs the same `rgb_pro: rgbpro` behavior node as the
       keyboard: ZMK forwards the behavior to the peripheral by device name.
+
+if RGB_PRO_FORWARD_ONLY
+
+config RGB_PRO_FORWARD_SYNC
+    bool "Send the active layer and BLE/output state to the keyboard"
+    default y
+    help
+      Needed for the status and battery overlays on the keyboard: both are
+      shown on a layer, and the status overlay shows the dongle's host link,
+      and neither is known to a peripheral. The dongle sends them as
+      internal &rgb_pro commands.
+
+config RGB_PRO_SYNC_PERIOD_MS
+    int "How often the dongle repeats that state (ms)"
+    default 2000
+    range 500 10000
+    depends on RGB_PRO_FORWARD_SYNC
+    help
+      The state is also sent immediately whenever it changes. The repetition
+      is what brings a keyboard that just woke up or reconnected up to date:
+      the dongle has no "peripheral connected" event, and ZMK drops commands
+      for a peripheral that is not ready.
+
+endif # RGB_PRO_FORWARD_ONLY
 
 config ZMK_BEHAVIOR_RGB_PRO
     bool

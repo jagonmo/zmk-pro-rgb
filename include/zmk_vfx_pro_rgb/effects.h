@@ -25,6 +25,18 @@
 #define RGB_PRO_HAS_HOST_INDICATORS 0
 #endif
 
+/* Active layer and BLE/output state, for the status and battery overlays. Read
+ * directly on the central; on a peripheral behind a dongle they are received
+ * from the dongle (RGB_PRO_CMD_SYNC_*). */
+#if RGB_PRO_IS_CENTRAL || defined(CONFIG_RGB_PRO_DONGLE_PERIPHERAL)
+#define RGB_PRO_HAS_LAYER_STATE 1
+#else
+#define RGB_PRO_HAS_LAYER_STATE 0
+#endif
+
+void rgbp_sync_layer(uint8_t layer);
+void rgbp_sync_status(uint8_t packed);
+
 /* Matrix geometry from Kconfig (set by the user's .conf). */
 #define RGB_PRO_COLS CONFIG_RGB_PRO_MATRIX_COLS
 #define RGB_PRO_ROWS CONFIG_RGB_PRO_MATRIX_ROWS
