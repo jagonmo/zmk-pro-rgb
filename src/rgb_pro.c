@@ -141,7 +141,7 @@ static K_WORK_DELAYABLE_DEFINE(rgb_pro_work, rgb_pro_tick);
 
 static void rgb_pro_tick(struct k_work *work) {
     if (!state.on) return;
-#if defined(CONFIG_RGB_PRO_LAMP_ARRAY)
+#if defined(CONFIG_RGB_PRO_LAMP_RENDER)
     /* Windows Dynamic Lighting owns the lamps while it is in host mode. */
     if (!rgbp_lamp_array_render())
 #endif

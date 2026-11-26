@@ -269,9 +269,14 @@ endif # RGB_PRO_BATTERY_INDICATOR
 
 # --- Windows Dynamic Lighting ---
 
+# Hidden: some LampArray source paints the lamps (USB or through a dongle).
+config RGB_PRO_LAMP_RENDER
+    bool
+
 config RGB_PRO_LAMP_ARRAY
     bool "Windows Dynamic Lighting (HID LampArray over USB)"
     depends on ZMK_USB
+    select RGB_PRO_LAMP_RENDER
     help
       Lets Windows 11 (Settings -> Personalization -> Dynamic Lighting)
       drive the per-key LEDs through the open HID LampArray standard,
@@ -287,6 +292,24 @@ config RGB_PRO_LAMP_ARRAY
       control the normal effects run, and the status overlays (caps lock,
       BLE/USB, battery) stay on top of the Windows frame.
 
+config RGB_PRO_LAMP_ARRAY_REMOTE
+    bool "Windows Dynamic Lighting through a receiver dongle (Bluetooth)"
+    depends on ZMK_BLE && !RGB_PRO_LAMP_ARRAY
+    select RGB_PRO_LAMP_RENDER
+    help
+      For a keyboard used through a Bluetooth-to-USB receiver dongle that
+      exposes HID LampArray to Windows on its own USB port. The dongle
+      forwards the colours over Bluetooth to a small GATT service added
+      here (wire format: include/zmk_vfx_pro_rgb/lamp_remote.h).
+
+      The keyboard shows the host's colours only while the dongle's
+      Bluetooth profile is the active output; any other profile brings the
+      keyboard's own effects back.
+
+      Cannot be combined with the USB version (RGB_PRO_LAMP_ARRAY). Adding
+      the service changes the keyboard's GATT database; it is placed after
+      the HID service so the HID handles hosts have cached do not move.
+
 if RGB_PRO_LAMP_ARRAY
 
 config RGB_PRO_LAMP_ARRAY_PITCH_UM
@@ -296,6 +319,10 @@ config RGB_PRO_LAMP_ARRAY_PITCH_UM
       Used to report each lamp's physical position to Windows from its
       matrix column and row. 19050 is the standard 19.05 mm key pitch.
 
+endif # RGB_PRO_LAMP_ARRAY
+
+if RGB_PRO_LAMP_RENDER
+
 config RGB_PRO_LAMP_ARRAY_APPLY_BRT
     bool "Scale Windows colours by the keyboard brightness"
     default y
@@ -304,7 +331,7 @@ config RGB_PRO_LAMP_ARRAY_APPLY_BRT
       also caps the colours sent by Windows. Disable it to show Windows'
       colours exactly as sent.
 
-endif # RGB_PRO_LAMP_ARRAY
+endif # RGB_PRO_LAMP_RENDER
 
 endif # RGB_PRO
 

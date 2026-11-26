@@ -22,6 +22,7 @@ if(CONFIG_RGB_PRO)
   zephyr_library_sources(src/overlays.c)
   zephyr_library_sources_ifdef(CONFIG_ZMK_BEHAVIOR_RGB_PRO src/behavior_rgb_pro.c)
   zephyr_library_sources_ifdef(CONFIG_RGB_PRO_LAMP_ARRAY src/lamp_array.c)
+  zephyr_library_sources_ifdef(CONFIG_RGB_PRO_LAMP_ARRAY_REMOTE src/lamp_remote.c)
 endif()
 
 # Dongle (central without LEDs): only the &rgb_pro behavior, so its commands are

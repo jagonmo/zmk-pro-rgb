@@ -155,8 +155,8 @@ void rgbp_render_extra(enum rgb_pro_effect eff);
 /* Draw status overlays on top of the current effect (overlays.c). */
 void rgbp_render_overlays(void);
 
-#if defined(CONFIG_RGB_PRO_LAMP_ARRAY)
-/* Windows Dynamic Lighting (lamp_array.c). Returns true and fills pixels[]
+#if defined(CONFIG_RGB_PRO_LAMP_RENDER)
+/* Windows Dynamic Lighting (lamp_array.c over USB, or lamp_remote.c via a dongle). Returns true and fills pixels[]
  * with the last frame Windows sent when it has taken control of the lamps;
  * returns false in autonomous mode, in which case the caller renders the
  * normal effect. */

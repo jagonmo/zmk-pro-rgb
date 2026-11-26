@@ -380,7 +380,8 @@ How it behaves:
 
 Limits:
 
-- **USB only.** Over Bluetooth the keyboard keeps running its own effects.
+- **USB only.** Over Bluetooth the keyboard keeps running its own effects,
+  unless it is used through a receiver dongle (next section).
 - On a split keyboard only the central half's LEDs follow Windows.
 - Only a real disconnect (VBUS lost) hands the lamps back to the keyboard. If
   the PC restarts while the cable stays powered, the keyboard keeps showing
@@ -398,6 +399,31 @@ The report descriptor and report layouts are Microsoft's, from
 [ArduinoHidForWindows](https://github.com/microsoft/ArduinoHidForWindows) and
 [RP2040MacropadHidSample](https://github.com/microsoft/RP2040MacropadHidSample)
 (MIT licence).
+
+### Through a receiver dongle (Bluetooth)
+
+A Bluetooth-to-USB receiver dongle can expose LampArray to Windows on its own
+USB port and forward the colours to the keyboard over Bluetooth. On the
+keyboard, instead of the two USB lines above:
+
+```
+CONFIG_RGB_PRO_LAMP_ARRAY_REMOTE=y
+```
+
+This adds a small GATT service to the keyboard (wire format in
+`include/zmk_vfx_pro_rgb/lamp_remote.h`). It is linked after the HID service,
+so the HID attribute handles that hosts have cached do not move.
+
+- Windows' colours show only while the dongle's Bluetooth profile is the
+  active output. Any other profile brings the keyboard's own effects back;
+  switching back shows Windows' last frame again.
+- When the dongle disconnects the keyboard returns to its own effects.
+- Overlays, `&rgb_pro` on/off and `CONFIG_RGB_PRO_LAMP_ARRAY_APPLY_BRT` behave
+  as with USB.
+- Cannot be combined with the USB version (`CONFIG_RGB_PRO_LAMP_ARRAY`).
+
+The dongle side reuses this module's LampArray descriptor and reports from
+`include/zmk_vfx_pro_rgb/lamp_array_hid.h`.
 
 ## Kconfig Reference
 
@@ -435,6 +461,7 @@ The report descriptor and report layouts are Microsoft's, from
 | `CONFIG_RGB_PRO_BATTERY_KEY_COUNT` | 4    | Number of keys in the bar         |
 | `CONFIG_RGB_PRO_LAMP_ARRAY`     | n       | Windows Dynamic Lighting over USB |
 | `CONFIG_RGB_PRO_LAMP_ARRAY_PITCH_UM` | 19050 | Key pitch reported to Windows (µm) |
+| `CONFIG_RGB_PRO_LAMP_ARRAY_REMOTE` | n | Dynamic Lighting through a receiver dongle (Bluetooth) |
 | `CONFIG_RGB_PRO_LAMP_ARRAY_APPLY_BRT` | y | Cap Windows colours with the keyboard brightness |
 
 ## License
