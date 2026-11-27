@@ -449,6 +449,13 @@ The dongle side reuses this module's LampArray descriptor and reports from
 | `CONFIG_RGB_PRO_CAPS_KEY`       | 0       | Key position of the caps key      |
 | `CONFIG_RGB_PRO_CAPS_R/G/B`     | 0/255/0 | Caps indicator colour             |
 | `CONFIG_RGB_PRO_CAPS_BLINK_MS`  | 1000    | Caps blink cycle (ms)             |
+| `CONFIG_RGB_PRO_NUM_INDICATOR` | n       | Enable num-lock overlay (steady colour) |
+| `CONFIG_RGB_PRO_NUM_KEY`        | 0       | Key position of the num-lock indicator |
+| `CONFIG_RGB_PRO_NUM_SHOW_WHEN_OFF` | n    | Light the key while num lock is off instead |
+| `CONFIG_RGB_PRO_NUM_R/G/B`      | 0/160/255 | Num indicator colour            |
+| `CONFIG_RGB_PRO_SCROLL_INDICATOR` | n     | Enable scroll-lock overlay (steady colour) |
+| `CONFIG_RGB_PRO_SCROLL_KEY`     | 0       | Key position of the scroll-lock indicator |
+| `CONFIG_RGB_PRO_SCROLL_R/G/B`   | 255/120/0 | Scroll indicator colour         |
 | `CONFIG_RGB_PRO_STATUS_OVERLAY` | n       | Enable output/BT status overlay   |
 | `CONFIG_RGB_PRO_STATUS_LAYER`   | 1       | Layer that shows the status       |
 | `CONFIG_RGB_PRO_STATUS_OUT_KEY` | 0       | Key position of the output toggle |

@@ -2,6 +2,7 @@
  * Status overlays — drawn on top of whatever effect is running.
  *
  *   caps    : blinks a key while caps lock is active
+ *   num/scroll : light a key for num lock / scroll lock (off by default)
  *   status  : BLE/USB output + active profile state, shown on a chosen layer
  *   battery : battery level as a red-to-green bar, shown on a chosen layer
  *
@@ -12,9 +13,17 @@
 #include <zmk_vfx_pro_rgb/effects.h>
 #include <zmk_vfx_pro_rgb/commands.h>
 
-#if defined(CONFIG_RGB_PRO_CAPS_INDICATOR) && RGB_PRO_IS_CENTRAL
+/* Any overlay that shows a lock LED of the host. */
+#if defined(CONFIG_RGB_PRO_CAPS_INDICATOR) || defined(CONFIG_RGB_PRO_NUM_INDICATOR) || \
+    defined(CONFIG_RGB_PRO_SCROLL_INDICATOR)
+#define RGBP_LOCK_OVERLAYS 1
+#else
+#define RGBP_LOCK_OVERLAYS 0
+#endif
+
+#if RGBP_LOCK_OVERLAYS && RGB_PRO_IS_CENTRAL
 #include <zmk/hid_indicators.h>
-#elif defined(CONFIG_RGB_PRO_CAPS_INDICATOR) && RGB_PRO_HAS_HOST_INDICATORS
+#elif RGBP_LOCK_OVERLAYS && RGB_PRO_HAS_HOST_INDICATORS
 #include <zmk/event_manager.h>
 #include <zmk/events/hid_indicators_changed.h>
 #endif
@@ -77,8 +86,13 @@ static inline uint8_t overlay_layer(void) {
 }
 #endif
 
-/* ---- Caps lock (HID indicators come from the host) ---- */
-#if defined(CONFIG_RGB_PRO_CAPS_INDICATOR) && RGB_PRO_HAS_HOST_INDICATORS
+/* ---- Lock LEDs (HID indicators come from the host) ---- */
+/* USB HID LED bits: 0 num lock, 1 caps lock, 2 scroll lock. */
+#define RGBP_LED_NUM    0x01
+#define RGBP_LED_CAPS   0x02
+#define RGBP_LED_SCROLL 0x04
+
+#if RGBP_LOCK_OVERLAYS && RGB_PRO_HAS_HOST_INDICATORS
 #if RGB_PRO_IS_CENTRAL
 static inline zmk_hid_indicators_t host_indicators(void) {
     return zmk_hid_indicators_get_current_profile();
@@ -98,10 +112,12 @@ ZMK_SUBSCRIPTION(rgbp_host_indicators, zmk_hid_indicators_changed);
 
 static inline zmk_hid_indicators_t host_indicators(void) { return peripheral_indicators; }
 #endif
+#endif /* RGBP_LOCK_OVERLAYS && RGB_PRO_HAS_HOST_INDICATORS */
 
+#if defined(CONFIG_RGB_PRO_CAPS_INDICATOR) && RGB_PRO_HAS_HOST_INDICATORS
 static void caps_overlay(void) {
     zmk_hid_indicators_t ind = host_indicators();
-    if (!(ind & 0x02)) return; /* bit 1 = caps lock (USB HID spec) */
+    if (!(ind & RGBP_LED_CAPS)) return;
 
 #if IS_ENABLED(CONFIG_RGB_PRO_CAPS_STYLE_DOUBLE)
     bool lit = double_pulse(CONFIG_RGB_PRO_CAPS_DOUBLE_ON_MS,
@@ -119,6 +135,31 @@ static void caps_overlay(void) {
 }
 #else
 static void caps_overlay(void) {}
+#endif
+
+/* Steady colour while the lock is on (or, with SHOW_WHEN_OFF, while it is
+ * off: num lock is on most of the time, so "off" is the state worth seeing). */
+#if defined(CONFIG_RGB_PRO_NUM_INDICATOR) && RGB_PRO_HAS_HOST_INDICATORS
+static void num_overlay(void) {
+    bool on = host_indicators() & RGBP_LED_NUM;
+    if (on == IS_ENABLED(CONFIG_RGB_PRO_NUM_SHOW_WHEN_OFF)) return;
+    paint_key(CONFIG_RGB_PRO_NUM_KEY, (struct led_rgb){CONFIG_RGB_PRO_NUM_R,
+                                                       CONFIG_RGB_PRO_NUM_G,
+                                                       CONFIG_RGB_PRO_NUM_B});
+}
+#else
+static void num_overlay(void) {}
+#endif
+
+#if defined(CONFIG_RGB_PRO_SCROLL_INDICATOR) && RGB_PRO_HAS_HOST_INDICATORS
+static void scroll_overlay(void) {
+    if (!(host_indicators() & RGBP_LED_SCROLL)) return;
+    paint_key(CONFIG_RGB_PRO_SCROLL_KEY, (struct led_rgb){CONFIG_RGB_PRO_SCROLL_R,
+                                                          CONFIG_RGB_PRO_SCROLL_G,
+                                                          CONFIG_RGB_PRO_SCROLL_B});
+}
+#else
+static void scroll_overlay(void) {}
 #endif
 
 /* ---- BLE / USB status (host link: read on the central, from the dongle on a peripheral) ---- */
@@ -209,6 +250,8 @@ static void battery_overlay(void) {}
 /* ---- Entry point, called once per frame after the effect renders ---- */
 void rgbp_render_overlays(void) {
     caps_overlay();
+    num_overlay();
+    scroll_overlay();
     status_overlay();
     battery_overlay();
 }

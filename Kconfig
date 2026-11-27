@@ -191,6 +191,67 @@ config RGB_PRO_CAPS_DOUBLE_PAUSE_MS
 
 endif # RGB_PRO_CAPS_INDICATOR
 
+config RGB_PRO_NUM_INDICATOR
+    bool "Num-lock indicator"
+    default n
+    help
+      Lights a key in a steady colour while num lock is on (or while it is
+      off, see RGB_PRO_NUM_SHOW_WHEN_OFF). Same requirements as the caps-lock
+      indicator (CONFIG_ZMK_HID_INDICATORS=y).
+
+if RGB_PRO_NUM_INDICATOR
+
+config RGB_PRO_NUM_KEY
+    int "Key position of the num-lock indicator"
+    default 0
+
+config RGB_PRO_NUM_SHOW_WHEN_OFF
+    bool "Light the key while num lock is OFF instead"
+    help
+      Windows usually keeps num lock on, so lighting the key when it is off
+      catches the unusual state.
+
+config RGB_PRO_NUM_R
+    int "Num indicator red (0-255)"
+    default 0
+
+config RGB_PRO_NUM_G
+    int "Num indicator green (0-255)"
+    default 160
+
+config RGB_PRO_NUM_B
+    int "Num indicator blue (0-255)"
+    default 255
+
+endif # RGB_PRO_NUM_INDICATOR
+
+config RGB_PRO_SCROLL_INDICATOR
+    bool "Scroll-lock indicator"
+    default n
+    help
+      Lights a key in a steady colour while scroll lock is on. Same
+      requirements as the caps-lock indicator.
+
+if RGB_PRO_SCROLL_INDICATOR
+
+config RGB_PRO_SCROLL_KEY
+    int "Key position of the scroll-lock indicator"
+    default 0
+
+config RGB_PRO_SCROLL_R
+    int "Scroll indicator red (0-255)"
+    default 255
+
+config RGB_PRO_SCROLL_G
+    int "Scroll indicator green (0-255)"
+    default 120
+
+config RGB_PRO_SCROLL_B
+    int "Scroll indicator blue (0-255)"
+    default 0
+
+endif # RGB_PRO_SCROLL_INDICATOR
+
 config RGB_PRO_STATUS_OVERLAY
     bool "Output / Bluetooth profile status overlay"
     default n
