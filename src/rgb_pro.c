@@ -198,7 +198,6 @@ int rgb_pro_command(uint8_t cmd, uint8_t param) {
     case RGB_PRO_CMD_DIR_TOG:  state.dir = -state.dir; break;
     case RGB_PRO_CMD_DIR_FWD:  state.dir = 1; break;
     case RGB_PRO_CMD_DIR_REV:  state.dir = -1; break;
-    case RGB_PRO_CMD_BRT_SET:  state.brt = MIN(100, param); break;
     default: return -ENOTSUP;
     }
     state.on ? start_anim() : stop_anim();

@@ -12,10 +12,6 @@
  *           it has assembled so far, so a frame is never shown half-updated.
  *   CONTROL write / write without response, encrypted link required
  *           u8 autonomous (1 = keyboard effects, 0 = colours from the host)
- *   BRIGHTNESS write / write without response, encrypted link required
- *           u8 brightness, 0-100 %. Sets the keyboard's brightness, as the
- *           brightness keys do (own effects, overlays and, with
- *           RGB_PRO_LAMP_ARRAY_APPLY_BRT, the host's colours).
  *
  * Only <stdint.h>/<string.h>: everything here is unit-tested on the host.
  */
@@ -36,7 +32,6 @@
 #define RGBP_LR_UUID_SERVICE RGBP_LR_UUID_BYTES(0x10)
 #define RGBP_LR_UUID_FRAME   RGBP_LR_UUID_BYTES(0x11)
 #define RGBP_LR_UUID_CONTROL RGBP_LR_UUID_BYTES(0x12)
-#define RGBP_LR_UUID_BRIGHTNESS RGBP_LR_UUID_BYTES(0x13)
 
 #define RGBP_LR_FLAG_COMPLETE 0x01
 #define RGBP_LR_HDR           3

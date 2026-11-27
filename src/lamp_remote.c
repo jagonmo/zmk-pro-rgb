@@ -12,9 +12,6 @@
  * the host and returns to autonomous mode, as the USB version does on unplug.
  *
  * Status overlays, on/off and brightness behave as with USB LampArray.
- *
- * The dongle can also set the brightness (BRIGHTNESS characteristic), so a
- * PC schedule can pick e.g. 85 % by day and 15 % at night.
  */
 
 #include <zephyr/kernel.h>
@@ -104,35 +101,6 @@ static ssize_t write_control(struct bt_conn *conn, const struct bt_gatt_attr *at
     return len;
 }
 
-/* Brightness chosen on the PC (day/night), applied like the brightness keys.
- * Writes arrive in the Bluetooth stack's thread; the command (which may touch
- * the LED strip) runs on the system work queue like key presses do. */
-static atomic_t brt_wanted;
-static void brt_handler(struct k_work *work) {
-    uint8_t v = (uint8_t)atomic_get(&brt_wanted);
-
-    rgb_pro_command(RGB_PRO_CMD_BRT_SET, v);
-    LOG_INF("brightness set to %d %% by the dongle", v);
-}
-static K_WORK_DEFINE(brt_work, brt_handler);
-
-static ssize_t write_brightness(struct bt_conn *conn, const struct bt_gatt_attr *attr,
-                                const void *buf, uint16_t len, uint16_t offset, uint8_t flags) {
-    if (offset) {
-        return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
-    }
-    if (len != 1) {
-        return BT_GATT_ERR(BT_ATT_ERR_INVALID_ATTRIBUTE_LEN);
-    }
-    uint8_t v = ((const uint8_t *)buf)[0];
-    if (v > 100) {
-        return BT_GATT_ERR(BT_ATT_ERR_VALUE_NOT_ALLOWED);
-    }
-    atomic_set(&brt_wanted, v);
-    k_work_submit(&brt_work);
-    return len;
-}
-
 /* Declared after ZMK's HID service on purpose: static services are placed in
  * name order, so this one sits after "hog_svc" and the HID attribute handles
  * that hosts have cached stay where they were. */
@@ -143,11 +111,6 @@ BT_GATT_SERVICE_DEFINE(rgbp_lamp_svc, BT_GATT_PRIMARY_SERVICE(BT_UUID_DECLARE_12
                        BT_GATT_CHARACTERISTIC(BT_UUID_DECLARE_128(RGBP_LR_UUID_CONTROL),
                                               BT_GATT_CHRC_WRITE | BT_GATT_CHRC_WRITE_WITHOUT_RESP,
                                               BT_GATT_PERM_WRITE_ENCRYPT, NULL, write_control,
-                                              NULL),
-                       /* Added last: FRAME and CONTROL keep their handles. */
-                       BT_GATT_CHARACTERISTIC(BT_UUID_DECLARE_128(RGBP_LR_UUID_BRIGHTNESS),
-                                              BT_GATT_CHRC_WRITE | BT_GATT_CHRC_WRITE_WITHOUT_RESP,
-                                              BT_GATT_PERM_WRITE_ENCRYPT, NULL, write_brightness,
                                               NULL));
 
 /* ---- Dongle gone: forget the host ---- */

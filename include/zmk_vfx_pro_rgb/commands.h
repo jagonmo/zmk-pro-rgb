@@ -26,11 +26,6 @@
 #define RGB_PRO_CMD_SYNC_LAYER   15  /* param: highest active layer */
 #define RGB_PRO_CMD_SYNC_STATUS  16  /* param: packed output / BLE profile state */
 
-/* Absolute brightness, param = 0-100 %. Bindable to a key
- * (&rgb_pro 17 50 = 50 %) and sent by the receiver dongle
- * when the PC picks a brightness. */
-#define RGB_PRO_CMD_BRT_SET      17
-
 /* Packed status (param of RGB_PRO_CMD_SYNC_STATUS):
  *   bit 0    : selected output is USB (otherwise BLE)
  *   bits 1-3 : active BLE profile index (0-7)
